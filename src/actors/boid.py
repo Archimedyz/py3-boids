@@ -20,9 +20,9 @@ class Boid:
         c = rotate(self._poly[2], self._theta)
         return transpose([a, b, c], self._pos)
 
-    def update(self):
+    def update(self, d_theta):
         # update theta
-        self._theta += math.pi / 100
+        self._theta += d_theta
 
         # safety checks
         if self._theta > 2 * math.pi:
@@ -34,7 +34,7 @@ def to_vector(magnitude, theta):
     return [magnitude * math.cos(theta), magnitude * math.sin(theta)]
 
 def rotate(coord, theta):
-    return [coord[0] * math.cos(theta), coord[1] * math.sin(theta)]
+    return [coord[0] * math.cos(theta) - coord[1] * math.sin(theta), coord[0] * math.sin(theta) + coord[1] * math.cos(theta)]
 
 def transpose(coords, vec):
     updated_coords = []
