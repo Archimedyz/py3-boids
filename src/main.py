@@ -57,7 +57,9 @@ def main_loop():
         # check for events
         pygame.event.pump()
         keys = pygame.key.get_pressed()
-        if keys[K_ESCAPE]:
+        event_types = (e.type for e in pygame.event.get())
+        
+        if keys[K_ESCAPE] or (pygame.QUIT in event_types):
             exit_loop = True
     
     return seconds_elapsed
@@ -65,5 +67,8 @@ def main_loop():
 print('Starting . . . ')
 
 total_seconds = main_loop()
+
+pygame.display.quit()
+pygame.quit()
 
 print(f'Done! Ran for {total_seconds} sec.')
