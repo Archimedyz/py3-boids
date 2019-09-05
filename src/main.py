@@ -39,7 +39,7 @@ def main_loop():
     prev_time = start_time
     curr_time = start_time
     seconds_elapsed = 0
-    boid = Boid([10, 10], [2, 2])
+    boid = Boid([400, 300], 10, 0, ([60, 0], [-20, 40], [-20, -40]))
     render(seconds_elapsed, boid)
     while not exit_loop:
         delta_s = curr_time - prev_time_s

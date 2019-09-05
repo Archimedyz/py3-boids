@@ -1,30 +1,43 @@
+import math
+
 class Boid:
-    def __init__(self, init_pos, init_vec):
-        self._pos = init_pos
-        self._vec = init_vec
-        self._poly = [(self._pos[0], self._pos[1] - 6), (self._pos[0] - 3, self._pos[1] + 4), (self._pos[0] + 3, self._pos[1] + 4)] # top, left, right
+    def __init__(self, init_position, init_magnitude, init_theta, init_poly):
+        self._pos = init_position
+        self._magnitude = init_magnitude
+        self._theta = init_theta
+        self._poly = init_poly
         self._color = (180, 0, 120)
         
     def get_pos(self):
         return self._pos
     
-    def get_vec(self):
-        return self._vec
-
-    def get_poly(self):
-        return self._poly
-
     def get_color(self):
         return self._color
 
-    def update(self):
-        # update the position
-        self._pos[0] += self._vec[0]
-        self._pos[1] += self._vec[1]
+    def get_poly(self):
+        a = rotate(self._poly[0], self._theta)
+        b = rotate(self._poly[1], self._theta)
+        c = rotate(self._poly[2], self._theta)
+        return transpose([a, b, c], self._pos)
 
-        # update the polygon
-        # TODO update orientation
-        self._poly[0] = (self._pos[0], self._pos[1] - 6)
-        self._poly[1] = (self._pos[0] - 3, self._pos[1] + 4)
-        self._poly[2] = (self._pos[0] + 3, self._pos[1] + 4)
-        
+    def update(self):
+        # update theta
+        self._theta += math.pi / 100
+
+        # safety checks
+        if self._theta > 2 * math.pi:
+            self._theta -= 2 * math.pi
+        elif self._theta < -2 * math.pi:
+            self._theta += 2 * math.pi
+    
+def to_vector(magnitude, theta):
+    return [magnitude * math.cos(theta), magnitude * math.sin(theta)]
+
+def rotate(coord, theta):
+    return [coord[0] * math.cos(theta), coord[1] * math.sin(theta)]
+
+def transpose(coords, vec):
+    updated_coords = []
+    for point in coords:
+        updated_coords.append([point[0] + vec[0], point[1] + vec[1]])
+    return updated_coords
