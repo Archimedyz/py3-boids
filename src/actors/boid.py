@@ -20,16 +20,29 @@ class Boid:
         c = rotate(self._poly[2], self._theta)
         return transpose([a, b, c], self._pos)
 
-    def update(self, d_theta):
+    def update(self, d_theta, d_megnitude):
         # update theta
         self._theta += d_theta
+        self._magnitude += d_megnitude
 
-        # safety checks
+        # enforce bounding
+        self.enforce_bounds()
+
+        # get update the position based on the speed
+        delta = to_vector(self._magnitude, self._theta)
+        self._pos[0] += delta[0]
+        self._pos[1] += delta[1]
+
+    def enforce_bounds(self):
+        # safety check: limit theta to +/- 2 pi
         if self._theta > 2 * math.pi:
             self._theta -= 2 * math.pi
         elif self._theta < -2 * math.pi:
             self._theta += 2 * math.pi
-    
+
+        # safety check: limit magnitude to [0, 8]
+        self._magnitude = min(max(self._magnitude, 0), 8)
+
 def to_vector(magnitude, theta):
     return [magnitude * math.cos(theta), magnitude * math.sin(theta)]
 
