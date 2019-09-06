@@ -1,5 +1,6 @@
 import time
 import pygame
+from math import pi
 from pygame.locals import *
 
 from actors.boid import Boid
@@ -21,7 +22,9 @@ screen.fill(bg_color)
 def update(boids, delta_theta, delta_magnitude):
     for b in boids:
         if b.get_id() == 0:
-            b.update(delta_theta, delta_magnitude)
+            b.update_speed(delta_magnitude, delta_theta)
+
+        b.update()
 
 def draw_boid(boid):
     # draw all objects to the screen
@@ -42,7 +45,7 @@ def main_loop():
     prev_time = start_time
     curr_time = start_time
 
-    boids = [Boid([400, 300], 0, 0), Boid([150, 150], 0, 1)]
+    boids = [Boid([100, 500], 3, -pi/4), Boid([100, 100], 3, pi/4)]
     
     render(boids)
     

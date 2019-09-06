@@ -37,11 +37,7 @@ class Boid:
         # safety check: limit magnitude to [0, 8]
         self._magnitude = min(max(self._magnitude, 0), 8)
 
-    def update(self, d_theta, d_megnitude):
-        # update theta
-        self._theta += d_theta
-        self._magnitude += d_megnitude
-
+    def update(self):
         # enforce bounding
         self.enforce_bounds()
 
@@ -49,6 +45,11 @@ class Boid:
         delta = to_vector(self._magnitude, self._theta)
         self._pos[0] += delta[0]
         self._pos[1] += delta[1]
+    
+    def update_speed(self, d_megnitude, d_theta):
+        # update theta
+        self._theta += d_theta
+        self._magnitude += d_megnitude
 
 def to_vector(magnitude, theta):
     return [magnitude * math.cos(theta), magnitude * math.sin(theta)]
