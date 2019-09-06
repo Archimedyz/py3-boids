@@ -1,13 +1,20 @@
 import math
 
 class Boid:
-    def __init__(self, init_position, init_magnitude, init_theta, init_poly):
+    _next_id = 0
+
+    def __init__(self, init_position, init_magnitude, init_theta):        
         self._pos = init_position
         self._magnitude = init_magnitude
         self._theta = init_theta
-        self._poly = init_poly
+        self._poly = [(8, 0), (-8, 6), (-8, -6)]
         self._color = (180, 0, 120)
+        self._id = Boid._next_id
+        Boid._next_id += 1 
         
+    def get_id(self):
+        return self._id
+
     def get_pos(self):
         return self._pos
     
@@ -19,6 +26,16 @@ class Boid:
         b = rotate(self._poly[1], self._theta)
         c = rotate(self._poly[2], self._theta)
         return transpose([a, b, c], self._pos)
+
+    def enforce_bounds(self):
+        # safety check: limit theta to +/- 2 pi
+        if self._theta > 2 * math.pi:
+            self._theta -= 2 * math.pi
+        elif self._theta < -2 * math.pi:
+            self._theta += 2 * math.pi
+
+        # safety check: limit magnitude to [0, 8]
+        self._magnitude = min(max(self._magnitude, 0), 8)
 
     def update(self, d_theta, d_megnitude):
         # update theta
@@ -32,16 +49,6 @@ class Boid:
         delta = to_vector(self._magnitude, self._theta)
         self._pos[0] += delta[0]
         self._pos[1] += delta[1]
-
-    def enforce_bounds(self):
-        # safety check: limit theta to +/- 2 pi
-        if self._theta > 2 * math.pi:
-            self._theta -= 2 * math.pi
-        elif self._theta < -2 * math.pi:
-            self._theta += 2 * math.pi
-
-        # safety check: limit magnitude to [0, 8]
-        self._magnitude = min(max(self._magnitude, 0), 8)
 
 def to_vector(magnitude, theta):
     return [magnitude * math.cos(theta), magnitude * math.sin(theta)]

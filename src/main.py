@@ -15,35 +15,42 @@ screen = pygame.display.set_mode(screen_size)
 pygame.display.set_caption('Boids')
 screen.fill(bg_color)
 
-def update(boid, delta_theta, delta_magnitude):
-    boid.update(delta_theta, delta_magnitude)
+# initialize the draw function
 
-def render(seconds_elapsed, boid):
+
+def update(boids, delta_theta, delta_magnitude):
+    for b in boids:
+        if b.get_id() == 0:
+            b.update(delta_theta, delta_magnitude)
+
+def draw_boid(boid):
+    # draw all objects to the screen
+    pygame.draw.polygon(screen, boid.get_color(), boid.get_poly())
+
+def render(boids):
     # clear the screen
     screen.fill(bg_color)
 
-    # draw all objects tot he screen
-    pygame.draw.polygon(screen, boid.get_color(), boid.get_poly())
+    for b in boids:
+        draw_boid(b)
 
     #rerender 
     pygame.display.update()
 
 def main_loop():
-    exit_loop = False
     start_time = time.time()
-    prev_time_s = start_time
     prev_time = start_time
     curr_time = start_time
-    seconds_elapsed = 0
-    boid = Boid([400, 300], 0, 0, ([8, 0], [-8, 6], [-8, -6]))
-    render(seconds_elapsed, boid)
-    while not exit_loop:
-        delta_s = curr_time - prev_time_s
-        delta = curr_time - prev_time
-        if delta_s > 1:
-            seconds_elapsed += 1
-            prev_time_s = curr_time
 
+    boids = [Boid([400, 300], 0, 0), Boid([150, 150], 0, 1)]
+    
+    render(boids)
+    
+    exit_loop = False
+    while not exit_loop:
+        # get the time elapsed since the last update 
+        delta = curr_time - prev_time
+        
         # check for events
         pygame.event.pump()
         keys = pygame.key.get_pressed()
@@ -69,18 +76,23 @@ def main_loop():
             if keys[K_DOWN]:
                 delta_magnitude -= 0.075
 
-            update(boid, delta_theta, delta_magnitude)
-            render(seconds_elapsed, boid)
+            # update and render state
+            update(boids, delta_theta, delta_magnitude)
+            render(boids)
+
+            # update prev_time
             prev_time = curr_time
+            
         curr_time = time.time()
     
-    return seconds_elapsed
+    # end of main_loop()
         
 print('Starting . . . ')
 
-total_seconds = main_loop()
+main_loop()
 
+# clean up
 pygame.display.quit()
 pygame.quit()
 
-print(f'Done! Ran for {total_seconds} sec.')
+print('Done!')
