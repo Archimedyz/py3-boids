@@ -16,24 +16,27 @@ screen = pygame.display.set_mode(screen_size)
 pygame.display.set_caption('Boids')
 screen.fill(bg_color)
 
+boids = [Boid([100, 500], 0, -pi/4), Boid([100, 100], 0, pi/4)]
+
 # initialize the draw function
 
 
 def update(boids, delta_theta, delta_magnitude):
     for b in boids:
-        if b.get_id() == 0:
+        if b.get_id() == 'boid_0':
             b.update_speed(delta_magnitude, delta_theta)
 
-        b.update()
+        b.update(boids)
 
 def draw_boid(boid):
-    # draw all objects to the screen
+    # draw a boid to the screen
     pygame.draw.polygon(screen, boid.get_color(), boid.get_poly())
 
 def render(boids):
     # clear the screen
     screen.fill(bg_color)
 
+    # render the boids
     for b in boids:
         draw_boid(b)
 
@@ -44,9 +47,7 @@ def main_loop():
     start_time = time.time()
     prev_time = start_time
     curr_time = start_time
-
-    boids = [Boid([100, 500], 3, -pi/4), Boid([100, 100], 3, pi/4)]
-    
+        
     render(boids)
     
     exit_loop = False
