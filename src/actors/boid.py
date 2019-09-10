@@ -1,4 +1,4 @@
-from math import pi, tau, sin, cos, atan
+from math import pi, sin, cos, atan2
 
 class Boid:
     _next_id = 0
@@ -32,11 +32,8 @@ class Boid:
         return transpose([a, b, c], self._pos)
 
     def enforce_bounds(self):
-        # safety check: limit theta to +/- 2 pi
-        if self._theta >= tau:
-            self._theta -= tau
-        elif self._theta < 0:
-            self._theta += tau
+        # safety check: limit theta to +/- pi
+        self._theta = bound_theta(self._theta)
 
         # safety check: limit magnitude to [0, 8]
         self._magnitude = min(max(self._magnitude, 0), 8)
@@ -45,7 +42,7 @@ class Boid:
         # enforce bounding
         self.enforce_bounds()
 
-        self._color = (255, 255, 255)
+        self._color = (0, 0, 0)
 
         # check for potential collisions
         for other in all_boids:
@@ -71,14 +68,13 @@ class Boid:
         if o_pos[0]-self._pos[0] == 0:
             angle_from_boid = pi/2 if o_pos[1] >= self._pos[1] else -pi/2
         else:
-            angle_from_boid = atan((o_pos[1]-self._pos[1])/(o_pos[0]-self._pos[0]))
+            angle_from_boid = atan2((o_pos[1]-self._pos[1]), (o_pos[0]-self._pos[0]))
 
-        # for angle to positive for comparison
-        angle_from_boid *= 1 if angle_from_boid >= 0 else -1
         # same for the boid
-        boid_angle = self._theta if self._theta >= 0 else -self._theta
+        adjusted_angle = bound_theta(angle_from_boid - self._theta)
+        
 
-        return boid_angle - Boid._view_angle/2 <= angle_from_boid <= boid_angle + Boid._view_angle/2
+        return -Boid._view_angle/2 <= adjusted_angle <= Boid._view_angle/2
 
 def to_vector(magnitude, theta):
     return [magnitude * cos(theta), magnitude * sin(theta)]
@@ -91,3 +87,10 @@ def transpose(coords, vec):
     for point in coords:
         updated_coords.append([point[0] + vec[0], point[1] + vec[1]])
     return updated_coords
+
+def bound_theta(theta):
+    if theta > pi:
+        theta -= 2*pi
+    elif theta <= -pi:
+        theta += 2*pi    
+    return theta
