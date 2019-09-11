@@ -91,6 +91,9 @@ class Boid:
 
         # if the relative position and relative vector are 
 
+        # finally, since a collision may occur, we veer away from the other boid
+        self._theta += Boid._d_theta_per_update if adjusted_angle <= 0 else -Boid._d_theta_per_update
+
 
 def to_vector(magnitude, theta):
     return [magnitude * cos(theta), magnitude * sin(theta)]
