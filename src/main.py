@@ -23,7 +23,7 @@ screen.fill(bg_color)
 
 m_boid_id = 'boid_0'
 
-boids = [Boid([100, 500], 0, -pi/4), Boid([400, 300], 0, pi/4)]
+boids = [Boid([100, 500], 4, -pi/4), Boid([100, 100], 4, pi/4)]
 
 # initialize the draw function
 
