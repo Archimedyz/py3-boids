@@ -3,6 +3,9 @@ from math import pi, sin, cos, atan2
 class Boid:
     _next_id = 0
     _view_angle = 1.5 * pi
+    _view_distance = 75
+    _d_theta_per_update = pi / 50
+    _d_magnitude_per_update = 0.075
 
     def __init__(self, init_position, init_magnitude, init_theta):        
         self._pos = init_position
@@ -47,11 +50,8 @@ class Boid:
         # check for potential collisions
         for other in all_boids:
             if other.get_id() == self._id: continue
-            if not self.in_view(other): continue
+            self.avoid_collision(other)
             
-            self._color = (180, 0, 120)
-
-
         # get update the position based on the speed
         delta = to_vector(self._magnitude, self._theta)
         self._pos[0] += delta[0]
@@ -62,19 +62,35 @@ class Boid:
         self._theta += d_theta
         self._magnitude += d_megnitude
 
-    def in_view(self, other):
-        # first determine if the other boid is at a visible angle
+    def avoid_collision(self, other):
+        # determine if the other's relative position to self
         o_pos = other.get_pos()
+        diff_pos = (o_pos[0]-self._pos[0], o_pos[1]-self._pos[1])
+
+        # if the other is too far from self, we cannot see it
+        if diff_pos[0]**2 + diff_pos[1]**2 > Boid._view_distance**2: return
+
+        # determine the other boid's angle relative to self
         if o_pos[0]-self._pos[0] == 0:
             angle_from_boid = pi/2 if o_pos[1] >= self._pos[1] else -pi/2
         else:
-            angle_from_boid = atan2((o_pos[1]-self._pos[1]), (o_pos[0]-self._pos[0]))
+            angle_from_boid = atan2(diff_pos[1], diff_pos[0])
 
-        # same for the boid
+        # adjust relative angle
         adjusted_angle = bound_theta(angle_from_boid - self._theta)
         
+        # if we cannot see the other boid, do nothing
+        if Boid._view_angle/2 <= adjusted_angle or adjusted_angle <= -Boid._view_angle/2: return
 
-        return -Boid._view_angle/2 <= adjusted_angle <= Boid._view_angle/2
+        # TEMP
+        self._color = (180, 0, 120)
+
+        # get the other's adjusted vector angle 
+        o_vec = other.get_vec()
+        o_adjusted_theta = bound_theta(o_vec[1] - self._theta)
+
+        # if the relative position and relative vector are 
+
 
 def to_vector(magnitude, theta):
     return [magnitude * cos(theta), magnitude * sin(theta)]
