@@ -3,21 +3,21 @@ from sys import float_info
 
 class Boid:
     MAX_MAGNITUDE = 8
+    _VIEW_ANGLE = 1.5 * pi
+    _VIEW_DISTANCE = 75
+    _D_THETA_PER_UPDATE = pi / 50
+    _D_MAGNITUDE_PER_UPDATE = 0.075
     
     _next_id = 0
-    _view_angle = 1.5 * pi
-    _view_distance = 75
-    _d_theta_per_update = pi / 50
-    _d_magnitude_per_update = 0.075
-
 
     def __init__(self, init_position, init_magnitude, init_theta):        
         self._pos = init_position
-        self._magnitude = init_magnitude
+        self._magnitude = min(max(init_magnitude, 0), Boid.MAX_MAGNITUDE)
         self._theta = normalize_angle(init_theta)
         self._poly = [(8, 0), (-8, 6), (-8, -6)]
         self._color = (180, 0, 120)
         self._id = f'boid_{Boid._next_id}'
+        
         Boid._next_id += 1 
         
     def get_id(self):
@@ -38,16 +38,20 @@ class Boid:
         c = rotate(self._poly[2], self._theta)
         return transpose([a, b, c], self._pos)
 
-    def enforce_bounds(self):
+    def enforce_bounds(self, screen_size):
         # safety check: limit theta to +/- pi
         self._theta = normalize_angle(self._theta)
 
         # safety check: limit magnitude to [0, 8]
-        self._magnitude = min(max(self._magnitude, 0), 8)
+        self._magnitude = min(max(self._magnitude, 0), Boid.MAX_MAGNITUDE)
 
-    def update(self, all_boids):
+        # wrapping behavior: wrap around to other end
+        self._pos[0] %= screen_size[0] + 1
+        self._pos[1] %= screen_size[1] + 1
+
+    def update(self, all_boids, screen_size):
         # enforce bounding
-        self.enforce_bounds()
+        self.enforce_bounds(screen_size)
 
         self._color = (0, 0, 0)
 
@@ -76,7 +80,7 @@ class Boid:
         diff_pos = (o_pos[0]-self._pos[0], o_pos[1]-self._pos[1])
 
         # if the other is too far from self, we cannot see it
-        if diff_pos[0]**2 + diff_pos[1]**2 > Boid._view_distance**2: return
+        if diff_pos[0]**2 + diff_pos[1]**2 > Boid._VIEW_DISTANCE**2: return
 
         # determine the other boid's angle relative to self
         if o_pos[0]-self._pos[0] == 0:
@@ -88,7 +92,7 @@ class Boid:
         adjusted_angle = normalize_angle(angle_from_boid - self._theta)
         
         # if we cannot see the other boid, do nothing
-        if Boid._view_angle/2 <= adjusted_angle or adjusted_angle <= -Boid._view_angle/2: return
+        if Boid._VIEW_ANGLE/2 <= adjusted_angle or adjusted_angle <= -Boid._VIEW_ANGLE/2: return
 
         # TEMP
         self._color = (180, 0, 120)
@@ -102,12 +106,12 @@ class Boid:
             # case 1: boid is directly in front
             if o_vec[0] == 0:
                 # case 1.1: stationary boid, move out of the way   
-                self._theta += Boid._d_theta_per_update
+                self._theta += Boid._D_THETA_PER_UPDATE
                 return
             elif float_equals(o_adjusted_theta, 0):                
                 # case 1.2: moving away directly away. if too slow, dodge it otherwise no need to do anything
                 if o_vec[0] < self._magnitude:
-                    self._theta += Boid._d_theta_per_update
+                    self._theta += Boid._D_THETA_PER_UPDATE
                 return
         # note, we do not need to consider a boids directly behind as we cannot see them
         # at this point, we know there is no boid directly in front, but if it's not moving, don't need to avoid it.
@@ -119,7 +123,7 @@ class Boid:
             return
     
         # finally, since a collision may occur, we veer away from the other boid
-        self._theta += Boid._d_theta_per_update if adjusted_angle <= 0 else -Boid._d_theta_per_update
+        self._theta += Boid._D_THETA_PER_UPDATE if adjusted_angle <= 0 else -Boid._D_THETA_PER_UPDATE
 
 
 def to_vector(magnitude, theta):

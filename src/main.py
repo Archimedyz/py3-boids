@@ -27,7 +27,7 @@ BOID_COUNT = 50
 
 def generate_boid():
     pos = [randint(0, screen_size[0]), randint(0, screen_size[1])]
-    magnitude = Boid.MAX_MAGNITUDE * random()
+    magnitude = Boid.MAX_MAGNITUDE * (random() + 1) / 2
     theta = 2 * random() * pi
 
     return Boid(pos, magnitude, theta)
@@ -37,7 +37,7 @@ def update(boids, delta_theta, delta_magnitude):
     for b in boids:
         # if b.get_id() == m_boid_id:
         #     b.update_speed(delta_magnitude, delta_theta)
-        b.update(boids)
+        b.update(boids, screen_size)
 
 def draw_boid(boid):
     # draw a boid to the screen
