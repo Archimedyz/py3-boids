@@ -2,16 +2,19 @@ from math import pi, sin, cos, atan2
 from sys import float_info
 
 class Boid:
+    MAX_MAGNITUDE = 8
+    
     _next_id = 0
     _view_angle = 1.5 * pi
     _view_distance = 75
     _d_theta_per_update = pi / 50
     _d_magnitude_per_update = 0.075
 
+
     def __init__(self, init_position, init_magnitude, init_theta):        
         self._pos = init_position
         self._magnitude = init_magnitude
-        self._theta = init_theta
+        self._theta = normalize_angle(init_theta)
         self._poly = [(8, 0), (-8, 6), (-8, -6)]
         self._color = (180, 0, 120)
         self._id = f'boid_{Boid._next_id}'
