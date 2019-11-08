@@ -1,10 +1,12 @@
 from math import pi, sin, cos, atan2
 from sys import float_info
 
+half_pi = pi / 2
+
 class Boid:
-    MAX_MAGNITUDE = 8
-    _VIEW_ANGLE = 1.5 * pi
-    _VIEW_DISTANCE = 75
+    MAX_MAGNITUDE = 10
+    VIEW_DISTANCE = 75
+    _VIEW_ANGLE = 0.75 * pi
     _D_THETA_PER_UPDATE = pi / 50
     _D_MAGNITUDE_PER_UPDATE = 0.075
     
@@ -46,14 +48,20 @@ class Boid:
         self._magnitude = min(max(self._magnitude, 0), Boid.MAX_MAGNITUDE)
 
         # wrapping behavior: wrap around to other end
-        self._pos[0] %= screen_size[0] + 1
-        self._pos[1] %= screen_size[1] + 1
+        if self._pos[0] > screen_size[0] or self._pos[0] < 0:
+            self._pos[0] %= screen_size[0] + 1
+        if self._pos[1] > screen_size[1] or self._pos[1] < 0:
+            self._pos[1] %= screen_size[1] + 1
 
     def update(self, all_boids, screen_size):
         # enforce bounding
         self.enforce_bounds(screen_size)
 
         self._color = (0, 0, 0)
+
+        # if the boid is not moving, it need not do anything to avoid the collision
+        if self._magnitude == 0:
+            return
 
         # check for potential collisions
         for other in all_boids:
@@ -71,20 +79,16 @@ class Boid:
         self._magnitude += d_megnitude
 
     def avoid_collision(self, other):
-        # if the boid is not moving, it need not do anything to avoid the collision
-        if self._magnitude == 0:
-            return
-
         # determine if the other's relative position to self
         o_pos = other.get_pos()
         diff_pos = (o_pos[0]-self._pos[0], o_pos[1]-self._pos[1])
 
         # if the other is too far from self, we cannot see it
-        if diff_pos[0]**2 + diff_pos[1]**2 > Boid._VIEW_DISTANCE**2: return
+        if diff_pos[0]**2 + diff_pos[1]**2 > Boid.VIEW_DISTANCE**2: return
 
         # determine the other boid's angle relative to self
-        if o_pos[0]-self._pos[0] == 0:
-            angle_from_boid = pi/2 if o_pos[1] >= self._pos[1] else -pi/2
+        if diff_pos[0] == 0:
+            angle_from_boid = half_pi if diff_pos[1] >= 0 else -half_pi
         else:
             angle_from_boid = atan2(diff_pos[1], diff_pos[0])
 
@@ -92,9 +96,9 @@ class Boid:
         adjusted_angle = normalize_angle(angle_from_boid - self._theta)
         
         # if we cannot see the other boid, do nothing
-        if Boid._VIEW_ANGLE/2 <= adjusted_angle or adjusted_angle <= -Boid._VIEW_ANGLE/2: return
+        if adjusted_angle >= Boid._VIEW_ANGLE or adjusted_angle <= -Boid._VIEW_ANGLE: return
 
-        # TEMP
+        # we can see another boid!
         self._color = (180, 0, 120)
 
         # get the other's adjusted vector angle 
