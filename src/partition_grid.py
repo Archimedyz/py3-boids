@@ -10,7 +10,6 @@ class PartitionGrid:
         c = self.get_coords(cell_func)
 
         cell = self._data[c[0]][c[1]]
-
         
         cell.append(data)
 
@@ -67,39 +66,3 @@ class PartitionGrid:
     def print_grid(self):
         for row in self._data:
             print(row)
-
-def f1():
-    return [1, 1]
-    
-def f2():
-    return [0, 0]
-    
-def f3():
-    return [4, 2]
-    
-def f4():
-    return [3, 7]
-
-grid = PartitionGrid(3, 4, True)
-
-grid.print_grid()
-
-print(f'-----------------')
-
-grid.push_data(1, f1)
-grid.push_data(2, f2)
-grid.push_data(3, f3)
-grid.push_data(4, f4)
-grid.push_data(7, f4)
-
-grid.print_grid()
-
-print(f'-----------------')
-
-out = grid.get_cell_group(f4)
-
-grid.print_grid()
-print(f'> {out}')
-print(f'-----------------')
-
-

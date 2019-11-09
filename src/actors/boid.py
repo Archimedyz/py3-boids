@@ -34,6 +34,9 @@ class Boid:
     def get_vec(self):
         return (self._magnitude, self._theta)
 
+    def get_pos(self):
+        return self._pos
+
     def get_poly(self):
         a = rotate(self._poly[0], self._theta)
         b = rotate(self._poly[1], self._theta)
