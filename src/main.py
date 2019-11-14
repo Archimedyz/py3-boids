@@ -46,12 +46,12 @@ def get_grid_coords(boid):
 
 def generate_rand_boid():
     pos = [randint(0, screen_size[0]), randint(0, screen_size[1])]
-    magnitude = Boid.MAX_MAGNITUDE * 0.75
+    magnitude = Boid.MAX_MAGNITUDE
     theta = 2 * random() * pi
 
     return Boid(pos, magnitude, theta)
 
-def update(boids, delta_theta, delta_magnitude):
+def update(delta_theta, delta_magnitude):
     # instead of iterating over the boids and always fetching its cell
     # and surrounding cells, fetch each cell only once, and iterate
     # over the boids in each cell
@@ -63,10 +63,13 @@ def update(boids, delta_theta, delta_magnitude):
 
             # now iterate over the boids in this cell
             for boid in cell:
+                # if boid.get_id() == m_boid_id:
+                #     boid.update_speed(delta_magnitude, delta_theta)
                 boid.update(cell_group, screen_size)
 
                 # before moving on, check to see if this boid changed cells
                 new_pos = get_grid_coords(boid)
+                #print(new_pos)
                 if i != new_pos[0] or j != new_pos[1]:
                     grid.pop_data(boid, [i, j])
                     grid.push_data(boid, new_pos)
@@ -90,7 +93,7 @@ def main_loop():
     prev_update_time = prev_render_time = time.time()
     
     boids = [generate_rand_boid() for i in range(BOID_COUNT)]
-    # boids = [Boid((100, 400), 0, 0), Boid((100, 200), 0, 0)]
+    # boids = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0)]
 
     for boid in boids:
         grid.push_data(boid, get_grid_coords(boid))
@@ -134,7 +137,7 @@ def main_loop():
                 delta_magnitude -= 0.075
 
             # update state
-            update(boids, delta_theta, delta_magnitude)
+            update(delta_theta, delta_magnitude)
 
             # update the prev time
             prev_update_time = time.time()

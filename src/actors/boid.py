@@ -53,7 +53,7 @@ class Boid:
         if self._pos[1] > screen_size[1] or self._pos[1] < 0:
             self._pos[1] %= screen_size[1] + 1
 
-    def update(self, other_boids, screen_size):
+    def update(self, boid_groups, screen_size):
         # enforce bounding
         self.enforce_bounds(screen_size)
 
@@ -63,10 +63,12 @@ class Boid:
         if self._magnitude == 0:
             return
 
-        # check for potential collisions
-        for other in other_boids:
-            if other.get_id() == self._id: continue
-            self.avoid_collision(other)
+        # iterate over each boid group
+        for group in boid_groups:
+            #iterate over each boid in the group
+            for other in group:
+                if other.get_id() == self._id: continue
+                self.avoid_collision(other)
             
         # get update the position based on the speed
         delta = to_vector(self._magnitude, self._theta)
