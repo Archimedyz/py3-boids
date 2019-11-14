@@ -13,7 +13,7 @@ class Boid:
     _next_id = 0
 
     def __init__(self, init_position, init_magnitude, init_theta):        
-        self._pos = init_position
+        self._pos = [init_position[0], init_position[1]] # force to a list to allow reassignment.
         self._magnitude = min(max(init_magnitude, 0), Boid.MAX_MAGNITUDE)
         self._theta = normalize_angle(init_theta)
         self._poly = [(8, 0), (-8, 6), (-8, -6)]
@@ -33,9 +33,6 @@ class Boid:
 
     def get_vec(self):
         return (self._magnitude, self._theta)
-
-    def get_pos(self):
-        return self._pos
 
     def get_poly(self):
         a = rotate(self._poly[0], self._theta)

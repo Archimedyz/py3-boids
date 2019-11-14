@@ -42,9 +42,9 @@ grid = DataGrid(grid_width, grid_height, True)
 
 def get_grid_coords(boid):
     pos = boid.get_pos()
-    return [int(pos[1]) % grid_height, int(pos[0]) % grid_width]
+    return [int(pos[1] // Boid.VIEW_DISTANCE), int(pos[0] // Boid.VIEW_DISTANCE)]
 
-def generate_boid():
+def generate_rand_boid():
     pos = [randint(0, screen_size[0]), randint(0, screen_size[1])]
     magnitude = Boid.MAX_MAGNITUDE * 0.75
     theta = 2 * random() * pi
@@ -53,8 +53,9 @@ def generate_boid():
 
 def update(boids, delta_theta, delta_magnitude):
     for boid in boids:
-        # if b.get_id() == m_boid_id:
-        #     b.update_speed(delta_magnitude, delta_theta)
+        # if boid.get_id() == m_boid_id:
+        #     boid.update_speed(delta_magnitude, delta_theta)
+
         coords = get_grid_coords(boid)
         grid.pop_data(boid, coords)
 
@@ -73,8 +74,8 @@ def render(boids):
     screen.fill(bg_color)
 
     # render the boids
-    for b in boids:
-        draw_boid(b)
+    for boid in boids:
+        draw_boid(boid)
 
     #re-render
     pygame.display.update()
@@ -82,7 +83,8 @@ def render(boids):
 def main_loop():
     prev_update_time = prev_render_time = time.time()
     
-    boids = [generate_boid() for i in range(BOID_COUNT)]
+    boids = [generate_rand_boid() for i in range(BOID_COUNT)]
+    # boids = [Boid((100, 400), 0, 0), Boid((100, 200), 0, 0)]
 
     for boid in boids:
         grid.push_data(boid, get_grid_coords(boid))
