@@ -42,7 +42,7 @@ grid = DataGrid(grid_width, grid_height, True)
 
 def get_grid_coords(boid):
     pos = boid.get_pos()
-    return [int(pos[1] // Boid.VIEW_DISTANCE), int(pos[0] // Boid.VIEW_DISTANCE)]
+    return [int((pos[1] // Boid.VIEW_DISTANCE) % grid_height), int((pos[0] // Boid.VIEW_DISTANCE) % grid_width)]
 
 def generate_rand_boid():
     pos = [randint(0, screen_size[0]), randint(0, screen_size[1])]
@@ -52,18 +52,24 @@ def generate_rand_boid():
     return Boid(pos, magnitude, theta)
 
 def update(boids, delta_theta, delta_magnitude):
-    for boid in boids:
-        # if boid.get_id() == m_boid_id:
-        #     boid.update_speed(delta_magnitude, delta_theta)
+    # instead of iterating over the boids and always fetching its cell
+    # and surrounding cells, fetch each cell only once, and iterate
+    # over the boids in each cell
+    for i in range(grid_height):
+        for j in range(grid_width):
+            # fetch the cell, and the cell-group
+            cell = grid.get_cell([i, j])
+            cell_group = grid.get_cell_group([i, j])
 
-        coords = get_grid_coords(boid)
-        grid.pop_data(boid, coords)
+            # now iterate over the boids in this cell
+            for boid in cell:
+                boid.update(cell_group, screen_size)
 
-        surrounding_boids = grid.get_cell_group(coords)
-
-        boid.update(surrounding_boids, screen_size)
-
-        grid.push_data(boid, get_grid_coords(boid))
+                # before moving on, check to see if this boid changed cells
+                new_pos = get_grid_coords(boid)
+                if i != new_pos[0] or j != new_pos[1]:
+                    grid.pop_data(boid, [i, j])
+                    grid.push_data(boid, new_pos)
 
 def draw_boid(boid):
     # draw a boid to the screen

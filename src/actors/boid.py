@@ -53,7 +53,7 @@ class Boid:
         if self._pos[1] > screen_size[1] or self._pos[1] < 0:
             self._pos[1] %= screen_size[1] + 1
 
-    def update(self, all_boids, screen_size):
+    def update(self, other_boids, screen_size):
         # enforce bounding
         self.enforce_bounds(screen_size)
 
@@ -64,7 +64,7 @@ class Boid:
             return
 
         # check for potential collisions
-        for other in all_boids:
+        for other in other_boids:
             if other.get_id() == self._id: continue
             self.avoid_collision(other)
             
