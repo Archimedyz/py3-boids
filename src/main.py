@@ -38,8 +38,6 @@ grid_height = screen_height // Boid.VIEW_DISTANCE
 if screen_height % Boid.VIEW_DISTANCE != 0:
     grid_height += 1
 
-grid = DataGrid(grid_width, grid_height, True)
-
 def get_grid_coords(boid):
     pos = boid.get_pos()
     return [int((pos[1] // Boid.VIEW_DISTANCE) % grid_height), int((pos[0] // Boid.VIEW_DISTANCE) % grid_width)]
@@ -52,6 +50,11 @@ def generate_rand_boid():
     return Boid(pos, magnitude, theta)
 
 def update(delta_theta, delta_magnitude):
+    # initialize the grid to improve updates
+    grid = DataGrid(grid_width, grid_height, True)
+    for boid in boids:
+        grid.push_data(boid, get_grid_coords(boid))
+
     # instead of iterating over the boids and always fetching its cell
     # and surrounding cells, fetch each cell only once, and iterate
     # over the boids in each cell
@@ -67,18 +70,11 @@ def update(delta_theta, delta_magnitude):
                 #     boid.update_speed(delta_magnitude, delta_theta)
                 boid.update(cell_group, screen_size)
 
-                # before moving on, check to see if this boid changed cells
-                new_pos = get_grid_coords(boid)
-                #print(new_pos)
-                if i != new_pos[0] or j != new_pos[1]:
-                    grid.pop_data(boid, [i, j])
-                    grid.push_data(boid, new_pos)
-
 def draw_boid(boid):
     # draw a boid to the screen
     pygame.draw.polygon(screen, boid.get_color(), boid.get_poly())
 
-def render(boids):
+def render():
     # clear the screen
     screen.fill(bg_color)
 
@@ -92,13 +88,7 @@ def render(boids):
 def main_loop():
     prev_update_time = prev_render_time = time.time()
     
-    boids = [generate_rand_boid() for i in range(BOID_COUNT)]
-    # boids = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0)]
-
-    for boid in boids:
-        grid.push_data(boid, get_grid_coords(boid))
-
-    render(boids)
+    render()
 
     delta_update_threshold = 1 / ups
     delta_render_threshold = 1 / fps
@@ -144,7 +134,7 @@ def main_loop():
 
         # render if it's time
         if delta_render > delta_render_threshold:
-            render(boids)
+            render()
 
             # update the prev time
             prev_render_time = time.time()
@@ -152,6 +142,9 @@ def main_loop():
     # end of main_loop()
         
 print('Starting . . . ')
+
+boids = [generate_rand_boid() for i in range(BOID_COUNT)]
+# boids = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0)]
 
 main_loop()
 
