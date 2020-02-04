@@ -1,3 +1,4 @@
+import config
 from math import pi, sin, cos, atan2
 from sys import float_info
 
@@ -68,7 +69,8 @@ class Boid:
             #iterate over each boid in the group
             for other in group:
                 if other.get_id() == self._id: continue
-                self.avoid_collision(other)
+                if config.Separation:
+                    self.avoid_collision(other)
             
         # get update the position based on the speed
         delta = to_vector(self._magnitude, self._theta)
