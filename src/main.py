@@ -38,43 +38,49 @@ grid_height = screen_height // Boid.VIEW_DISTANCE
 if screen_height % Boid.VIEW_DISTANCE != 0:
     grid_height += 1
 
-grid = DataGrid(grid_width, grid_height, True)
-
 def get_grid_coords(boid):
     pos = boid.get_pos()
-    return [int(pos[1]) % grid_height, int(pos[0]) % grid_width]
+    return [int((pos[1] // Boid.VIEW_DISTANCE) % grid_height), int((pos[0] // Boid.VIEW_DISTANCE) % grid_width)]
 
-def generate_boid():
+def generate_rand_boid():
     pos = [randint(0, screen_size[0]), randint(0, screen_size[1])]
-    magnitude = Boid.MAX_MAGNITUDE * 0.75
+    magnitude = Boid.MAX_MAGNITUDE
     theta = 2 * random() * pi
 
     return Boid(pos, magnitude, theta)
 
-def update(boids, delta_theta, delta_magnitude):
+def update(delta_theta, delta_magnitude):
+    # initialize the grid to improve updates
+    grid = DataGrid(grid_width, grid_height, True)
     for boid in boids:
-        # if b.get_id() == m_boid_id:
-        #     b.update_speed(delta_magnitude, delta_theta)
-        coords = get_grid_coords(boid)
-        grid.pop_data(boid, coords)
-
-        surrounding_boids = grid.get_cell_group(coords)
-
-        boid.update(surrounding_boids, screen_size)
-
         grid.push_data(boid, get_grid_coords(boid))
+
+    # instead of iterating over the boids and always fetching its cell
+    # and surrounding cells, fetch each cell only once, and iterate
+    # over the boids in each cell
+    for i in range(grid_height):
+        for j in range(grid_width):
+            # fetch the cell, and the cell-group
+            cell = grid.get_cell([i, j])
+            cell_group = grid.get_cell_group([i, j])
+
+            # now iterate over the boids in this cell
+            for boid in cell:
+                # if boid.get_id() == m_boid_id:
+                #     boid.update_speed(delta_magnitude, delta_theta)
+                boid.update(cell_group, screen_size)
 
 def draw_boid(boid):
     # draw a boid to the screen
     pygame.draw.polygon(screen, boid.get_color(), boid.get_poly())
 
-def render(boids):
+def render():
     # clear the screen
     screen.fill(bg_color)
 
     # render the boids
-    for b in boids:
-        draw_boid(b)
+    for boid in boids:
+        draw_boid(boid)
 
     #re-render
     pygame.display.update()
@@ -82,12 +88,7 @@ def render(boids):
 def main_loop():
     prev_update_time = prev_render_time = time.time()
     
-    boids = [generate_boid() for i in range(BOID_COUNT)]
-
-    for boid in boids:
-        grid.push_data(boid, get_grid_coords(boid))
-
-    render(boids)
+    render()
 
     delta_update_threshold = 1 / ups
     delta_render_threshold = 1 / fps
@@ -126,14 +127,14 @@ def main_loop():
                 delta_magnitude -= 0.075
 
             # update state
-            update(boids, delta_theta, delta_magnitude)
+            update(delta_theta, delta_magnitude)
 
             # update the prev time
             prev_update_time = time.time()
 
         # render if it's time
         if delta_render > delta_render_threshold:
-            render(boids)
+            render()
 
             # update the prev time
             prev_render_time = time.time()
@@ -141,6 +142,9 @@ def main_loop():
     # end of main_loop()
         
 print('Starting . . . ')
+
+boids = [generate_rand_boid() for i in range(BOID_COUNT)]
+# boids = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0)]
 
 main_loop()
 

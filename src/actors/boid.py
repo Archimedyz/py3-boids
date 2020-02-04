@@ -13,7 +13,7 @@ class Boid:
     _next_id = 0
 
     def __init__(self, init_position, init_magnitude, init_theta):        
-        self._pos = init_position
+        self._pos = [init_position[0], init_position[1]] # force to a list to allow reassignment.
         self._magnitude = min(max(init_magnitude, 0), Boid.MAX_MAGNITUDE)
         self._theta = normalize_angle(init_theta)
         self._poly = [(8, 0), (-8, 6), (-8, -6)]
@@ -34,9 +34,6 @@ class Boid:
     def get_vec(self):
         return (self._magnitude, self._theta)
 
-    def get_pos(self):
-        return self._pos
-
     def get_poly(self):
         a = rotate(self._poly[0], self._theta)
         b = rotate(self._poly[1], self._theta)
@@ -56,7 +53,7 @@ class Boid:
         if self._pos[1] > screen_size[1] or self._pos[1] < 0:
             self._pos[1] %= screen_size[1] + 1
 
-    def update(self, all_boids, screen_size):
+    def update(self, boid_groups, screen_size):
         # enforce bounding
         self.enforce_bounds(screen_size)
 
@@ -66,10 +63,12 @@ class Boid:
         if self._magnitude == 0:
             return
 
-        # check for potential collisions
-        for other in all_boids:
-            if other.get_id() == self._id: continue
-            self.avoid_collision(other)
+        # iterate over each boid group
+        for group in boid_groups:
+            #iterate over each boid in the group
+            for other in group:
+                if other.get_id() == self._id: continue
+                self.avoid_collision(other)
             
         # get update the position based on the speed
         delta = to_vector(self._magnitude, self._theta)
