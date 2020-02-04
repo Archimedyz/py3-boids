@@ -3,14 +3,15 @@ import pygame
 from math import pi, atan2
 from pygame.locals import *
 from random import random, randint
+import config
 
 from actors.boid import Boid
 from data_grid import DataGrid
 
 # defaults/constants
 bg_color = (159, 182, 205)
-screen_width = 800
-screen_height = 600
+screen_width = 1000
+screen_height = 750
 screen_size = (screen_width, screen_height)
 ups = 60 # updates per second
 fps = 60 # frames per second
@@ -27,8 +28,6 @@ font_dark_blue = (0, 0, 64)
 
 pygame.display.set_caption('Boids')
 screen.fill(bg_color)
-
-BOID_COUNT = 100
 
 grid_width = screen_width // Boid.VIEW_DISTANCE
 if screen_width % Boid.VIEW_DISTANCE != 0:
@@ -66,13 +65,30 @@ def update(delta_theta, delta_magnitude):
 
             # now iterate over the boids in this cell
             for boid in cell:
-                # if boid.get_id() == m_boid_id:
-                #     boid.update_speed(delta_magnitude, delta_theta)
                 boid.update(cell_group, screen_size)
 
 def draw_boid(boid):
     # draw a boid to the screen
     pygame.draw.polygon(screen, boid.get_color(), boid.get_poly())
+
+def render_config():
+    text_separation = font.render('SEPARATION', True, font_dark_green if config.Separation else font_dark_red)
+    textRect_separation = text_separation.get_rect()
+    textRect_separation.x = 5
+    textRect_separation.y = 5
+
+    text_alignment = font.render('ALIGNMENT', True, font_dark_green if config.Alignment else font_dark_red)
+    textRect_alignment = text_alignment.get_rect()
+    textRect_alignment.x = 5
+    textRect_alignment.y = 20
+
+    text_cohesion = font.render('COHESION', True, font_dark_green if config.Cohesion else font_dark_red)
+    textRect_cohesion = text_cohesion.get_rect()
+    textRect_cohesion.x = 5
+    textRect_cohesion.y = 35
+    screen.blit(text_separation, textRect_separation)
+    screen.blit(text_alignment, textRect_alignment)
+    screen.blit(text_cohesion, textRect_cohesion)
 
 def render():
     # clear the screen
@@ -81,6 +97,9 @@ def render():
     # render the boids
     for boid in boids:
         draw_boid(boid)
+
+    if config.Show_Config:
+        render_config()
 
     #re-render
     pygame.display.update()
@@ -92,6 +111,11 @@ def main_loop():
 
     delta_update_threshold = 1 / ups
     delta_render_threshold = 1 / fps
+
+    _1_is_pressed = False
+    _2_is_pressed = False
+    _3_is_pressed = False
+    _c_is_pressed = False
 
     exit_loop = False
     while not exit_loop:
@@ -107,7 +131,35 @@ def main_loop():
         event_types = (e.type for e in pygame.event.get())
 
         if keys[K_ESCAPE] or keys[K_q] or (pygame.QUIT in event_types):
-            exit_loop = True
+            break
+
+        # toggle separation rule
+        if keys[K_1]:
+            _1_is_pressed = True
+        elif _1_is_pressed:
+            config.Separation = not config.Separation
+            _1_is_pressed = False
+
+        # toggle alignment rule
+        if keys[K_2]:
+            _2_is_pressed = True
+        elif _2_is_pressed:
+            config.Alignment = not config.Alignment
+            _2_is_pressed = False
+
+        # toggle cohesion rule
+        if keys[K_3]:
+            _3_is_pressed = True
+        elif _3_is_pressed:
+            config.Cohesion = not config.Cohesion
+            _3_is_pressed = False
+
+        # toggle config display
+        if keys[K_c]:
+            _c_is_pressed = True
+        elif _c_is_pressed:
+            config.Show_Config = not config.Show_Config
+            _c_is_pressed = False
 
         # update and process event if it's time
         if delta_update > delta_update_threshold:
@@ -143,7 +195,7 @@ def main_loop():
         
 print('Starting . . . ')
 
-boids = [generate_rand_boid() for i in range(BOID_COUNT)]
+boids = [generate_rand_boid() for i in range(config.BOID_COUNT)]
 # boids = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0)]
 
 main_loop()
