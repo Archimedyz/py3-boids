@@ -7,6 +7,7 @@ half_pi = pi / 2
 class Boid:
     MAX_MAGNITUDE = 10
     VIEW_DISTANCE = 75
+    VIEW_DISTANCE_SQUARED = VIEW_DISTANCE ** 2
     _VIEW_ANGLE = 0.75 * pi
     _D_THETA_PER_UPDATE = pi / 50
     _D_MAGNITUDE_PER_UPDATE = 0.075
@@ -17,12 +18,24 @@ class Boid:
         self._pos = [init_position[0], init_position[1]] # force to a list to allow reassignment.
         self._magnitude = min(max(init_magnitude, 0), Boid.MAX_MAGNITUDE)
         self._theta = normalize_angle(init_theta)
+
+        # "private" properties
         self._poly = [(8, 0), (-8, 6), (-8, -6)]
         self._color = (180, 0, 120)
         self._id = f'boid_{Boid._next_id}'
-        
+
+        # properties to help w/ computation later
+        self.diff_pos = None
+        self.adjusted_angle = None
+
+        # finally update the id counter
         Boid._next_id += 1 
-        
+
+    def reset_computation_properties(self):
+        self.diff_pos = None
+        self.adjusted_angle = None
+
+
     def get_id(self):
         return self._id
 
@@ -66,11 +79,24 @@ class Boid:
 
         # iterate over each boid group
         for group in boid_groups:
-            #iterate over each boid in the group
+            # iterate over each boid in the group
             for other in group:
-                if other.get_id() == self._id: continue
+                # don't check self
+                if other.get_id() == self._id:
+                    continue
+
+                self.reset_computation_properties()
+
+                # if one of the rules is active, check for visibility. If the other boid is not visible, we cannot act on it.
+                if (config.Separation or config.Alignment or config.Cohesion) and \
+                    not self.can_see(other):
+                    continue
+
+                # follow the 3 rules if active
                 if config.Separation:
                     self.avoid_collision(other)
+                if config.Alignment:
+                    self.align(other)
             
         # get update the position based on the speed
         delta = to_vector(self._magnitude, self._theta)
@@ -82,35 +108,42 @@ class Boid:
         self._theta += d_theta
         self._magnitude += d_megnitude
 
-    def avoid_collision(self, other):
+    def can_see(self, other):
         # determine if the other's relative position to self
         o_pos = other.get_pos()
-        diff_pos = (o_pos[0]-self._pos[0], o_pos[1]-self._pos[1])
+        self.diff_pos = (o_pos[0]-self._pos[0], o_pos[1]-self._pos[1])
 
         # if the other is too far from self, we cannot see it
-        if diff_pos[0]**2 + diff_pos[1]**2 > Boid.VIEW_DISTANCE**2: return
+        if self.diff_pos[0] > Boid.VIEW_DISTANCE or \
+            self.diff_pos[1] > Boid.VIEW_DISTANCE or \
+            self.diff_pos[0]**2 + self.diff_pos[1]**2 > Boid.VIEW_DISTANCE_SQUARED:
+            return False
 
         # determine the other boid's angle relative to self
-        if diff_pos[0] == 0:
-            angle_from_boid = half_pi if diff_pos[1] >= 0 else -half_pi
+        if self.diff_pos[0] == 0:
+            angle_from_boid = half_pi if self.diff_pos[1] >= 0 else -half_pi
         else:
-            angle_from_boid = atan2(diff_pos[1], diff_pos[0])
+            angle_from_boid = atan2(self.diff_pos[1], self.diff_pos[0])
 
         # adjust relative angle
-        adjusted_angle = normalize_angle(angle_from_boid - self._theta)
+        self.adjusted_angle = normalize_angle(angle_from_boid - self._theta)
         
         # if we cannot see the other boid, do nothing
-        if adjusted_angle >= Boid._VIEW_ANGLE or adjusted_angle <= -Boid._VIEW_ANGLE: return
+        if self.adjusted_angle >= Boid._VIEW_ANGLE or self.adjusted_angle <= -Boid._VIEW_ANGLE:
+            return False
 
-        # we can see another boid!
+        # we can see the other boid!
         self._color = (180, 0, 120)
 
+        return True
+
+    def avoid_collision(self, other):
         # get the other's adjusted vector angle 
         o_vec = other.get_vec()
         o_adjusted_theta = normalize_angle(o_vec[1] - self._theta)
 
         ## first we consider some edge cases
-        if float_equals(adjusted_angle, 0): 
+        if float_equals(self.adjusted_angle, 0): 
             # case 1: boid is directly in front
             if o_vec[0] == 0:
                 # case 1.1: stationary boid, move out of the way   
@@ -127,12 +160,19 @@ class Boid:
             return
 
         # last thing to check is if a collision will occur
-        if not in_range(o_adjusted_theta, (0, normalize_angle(pi + adjusted_angle))):
+        if not in_range(o_adjusted_theta, (0, normalize_angle(pi + self.adjusted_angle))):
             return
     
         # finally, since a collision may occur, we veer away from the other boid
-        self._theta += Boid._D_THETA_PER_UPDATE if adjusted_angle <= 0 else -Boid._D_THETA_PER_UPDATE
+        if self.adjusted_angle <= 0:
+            self._theta += Boid._D_THETA_PER_UPDATE
+        else:
+            self._theta -= Boid._D_THETA_PER_UPDATE
 
+    def align(self, other):
+        return
+
+# END class Boid
 
 def to_vector(magnitude, theta):
     return [magnitude * cos(theta), magnitude * sin(theta)]
