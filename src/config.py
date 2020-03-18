@@ -6,4 +6,4 @@ Cohesion = False
 Show_Config = False
 
 # Constants
-BOID_COUNT = 50
+BOID_COUNT = 75

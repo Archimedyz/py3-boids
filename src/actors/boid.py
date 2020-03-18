@@ -1,5 +1,5 @@
 import config
-from math import pi, sin, cos, atan2
+from math import atan2, cos, pi, sin, sqrt
 from sys import float_info
 
 half_pi = pi / 2
@@ -7,7 +7,7 @@ half_pi = pi / 2
 class Boid:
     MAX_MAGNITUDE = 10
     VIEW_DISTANCE = 75
-    VIEW_DISTANCE_SQUARED = VIEW_DISTANCE ** 2
+    SQUARED_VIEW_DISTANCE = VIEW_DISTANCE ** 2
     _VIEW_ANGLE = 0.75 * pi
     _D_THETA_PER_UPDATE = pi / 50
     _D_MAGNITUDE_PER_UPDATE = 0.075
@@ -26,6 +26,7 @@ class Boid:
 
         # properties to help w/ computation later
         self.diff_pos = None
+        self.squared_distance = None
         self.adjusted_angle = None
 
         # finally update the id counter
@@ -33,6 +34,7 @@ class Boid:
 
     def reset_computation_properties(self):
         self.diff_pos = None
+        self.squared_distance = None
         self.adjusted_angle = None
 
 
@@ -115,8 +117,12 @@ class Boid:
 
         # if the other is too far from self, we cannot see it
         if self.diff_pos[0] > Boid.VIEW_DISTANCE or \
-            self.diff_pos[1] > Boid.VIEW_DISTANCE or \
-            self.diff_pos[0]**2 + self.diff_pos[1]**2 > Boid.VIEW_DISTANCE_SQUARED:
+            self.diff_pos[1] > Boid.VIEW_DISTANCE:
+            return False
+        
+        # now we can compute and store the distance squared
+        self.squared_distance = self.diff_pos[0]**2 + self.diff_pos[1]**2
+        if self.squared_distance > Boid.SQUARED_VIEW_DISTANCE:
             return False
 
         # determine the other boid's angle relative to self
@@ -170,7 +176,24 @@ class Boid:
             self._theta -= Boid._D_THETA_PER_UPDATE
 
     def align(self, other):
-        return
+        # we should only try to align with boids going in the same general direction
+        # the rule will be that the angle difference cannot be more than pi/2
+        o_vec = other.get_vec()
+        angle_diff = o_vec[1] - self._theta
+
+        # the absolute value must be less than pi/2
+        if not (-pi/2 <= angle_diff <= pi/2):
+            return
+
+        # optionally, if both boids are already going in the same direction, there is nothing to do.
+        if float_equals(angle_diff, 0):
+            return
+        
+        # otherwise, we will try to fall into it's trajectory, but based on our distance to it.
+        multiplier = 1 if self.squared_distance < 1 else 1 / sqrt(self.squared_distance)
+        self._theta += angle_diff * multiplier
+
+        
 
 # END class Boid
 

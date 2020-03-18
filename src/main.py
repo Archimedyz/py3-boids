@@ -196,7 +196,7 @@ def main_loop():
 print('Starting . . . ')
 
 boids = [generate_rand_boid() for i in range(config.BOID_COUNT)]
-# boids = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0)]
+# boids = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0), Boid((100, 300), Boid.MAX_MAGNITUDE/4, pi/4)]
 
 main_loop()
 
