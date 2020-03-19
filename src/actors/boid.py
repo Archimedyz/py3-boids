@@ -90,14 +90,14 @@ class Boid:
                 self.reset_computation_properties()
 
                 # if one of the rules is active, check for visibility. If the other boid is not visible, we cannot act on it.
-                if (config.Separation or config.Alignment or config.Cohesion) and \
+                if (config.SEPARATION or config.ALIGNMENT or config.COHESION) and \
                     not self.can_see(other):
                     continue
 
                 # follow the 3 rules if active
-                if config.Separation:
+                if config.SEPARATION:
                     self.avoid_collision(other)
-                if config.Alignment:
+                if config.ALIGNMENT:
                     self.align(other)
             
         # get update the position based on the speed

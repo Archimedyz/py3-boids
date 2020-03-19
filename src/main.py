@@ -81,19 +81,19 @@ def draw_boid(boid):
 
 def render_config():
     text_separation = \
-        FONT.render('SEPARATION', True, FONT_DARK_GREEN if config.Separation else FONT_DARK_RED)
+        FONT.render('SEPARATION', True, FONT_DARK_GREEN if config.SEPARATION else FONT_DARK_RED)
     text_rect_separation = text_separation.get_rect()
     text_rect_separation.x = 5
     text_rect_separation.y = 5
 
     text_alignment = \
-        FONT.render('ALIGNMENT', True, FONT_DARK_GREEN if config.Alignment else FONT_DARK_RED)
+        FONT.render('ALIGNMENT', True, FONT_DARK_GREEN if config.ALIGNMENT else FONT_DARK_RED)
     text_rect_alignment = text_alignment.get_rect()
     text_rect_alignment.x = 5
     text_rect_alignment.y = 20
 
     text_cohesion = \
-        FONT.render('COHESION', True, FONT_DARK_GREEN if config.Cohesion else FONT_DARK_RED)
+        FONT.render('COHESION', True, FONT_DARK_GREEN if config.COHESION else FONT_DARK_RED)
     text_rect_cohesion = text_cohesion.get_rect()
     text_rect_cohesion.x = 5
     text_rect_cohesion.y = 35
@@ -111,7 +111,7 @@ def render():
     for boid in BOIDS:
         draw_boid(boid)
 
-    if config.Show_Config:
+    if config.SHOW_CONFIG:
         render_config()
 
     #re-render
@@ -151,28 +151,28 @@ def main_loop():
         if keys[K_1]:
             _1_is_pressed = True
         elif _1_is_pressed:
-            config.Separation = not config.Separation
+            config.SEPARATION = not config.SEPARATION
             _1_is_pressed = False
 
         # toggle alignment rule
         if keys[K_2]:
             _2_is_pressed = True
         elif _2_is_pressed:
-            config.Alignment = not config.Alignment
+            config.ALIGNMENT = not config.ALIGNMENT
             _2_is_pressed = False
 
         # toggle cohesion rule
         if keys[K_3]:
             _3_is_pressed = True
         elif _3_is_pressed:
-            config.Cohesion = not config.Cohesion
+            config.COHESION = not config.COHESION
             _3_is_pressed = False
 
         # toggle config display
         if keys[K_c]:
             _c_is_pressed = True
         elif _c_is_pressed:
-            config.Show_Config = not config.Show_Config
+            config.SHOW_CONFIG = not config.SHOW_CONFIG
             _c_is_pressed = False
 
         # update and process event if it's time
