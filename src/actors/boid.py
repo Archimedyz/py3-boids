@@ -182,13 +182,13 @@ class Boid:
         angle_diff = o_vec[1] - self._theta
 
         # the absolute value must be less than pi/2
-        if not (-pi/2 <= angle_diff <= pi/2):
+        if not -pi/2 <= angle_diff <= pi/2:
             return
 
         # optionally, if both boids are already going in the same direction, there is nothing to do.
         if float_equals(angle_diff, 0):
             return
-        
+
         # otherwise, we will try to fall into it's trajectory, but based on our distance to it.
         multiplier = 1 if self.squared_distance < 1 else 1 / sqrt(self.squared_distance)
         self._theta += angle_diff * multiplier

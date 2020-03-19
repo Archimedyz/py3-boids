@@ -1,6 +1,6 @@
 import time
 import pygame
-from math import pi, atan2
+from math import pi
 from pygame.locals import *
 from random import random, randint
 import config
@@ -9,93 +9,106 @@ from actors.boid import Boid
 from data_grid import DataGrid
 
 # defaults/constants
-bg_color = (159, 182, 205)
-screen_width = 1000
-screen_height = 750
-screen_size = (screen_width, screen_height)
-ups = 60 # updates per second
-fps = 60 # frames per second
-m_boid_id = 'boid_0'
+BG_COLOR = (159, 182, 205)
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 750
+SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
+UPS = 60  # updates per second
+FPS = 60  # frames per second
+M_BOID_0 = 'boid_0'
 
 # setup
 pygame.init()
-screen = pygame.display.set_mode(screen_size)
+SCREEN = pygame.display.set_mode(SCREEN_SIZE)
 
-font = pygame.font.Font(None, 24)
-font_dark_red = (64, 0, 0)
-font_dark_green = (0, 64, 0)
-font_dark_blue = (0, 0, 64)
+FONT = pygame.font.Font(None, 24)
+FONT_DARK_RED = (64, 0, 0)
+FONT_DARK_GREEN = (0, 64, 0)
+FONT_DARK_BLUE = (0, 0, 64)
 
 pygame.display.set_caption('Boids')
-screen.fill(bg_color)
+SCREEN.fill(BG_COLOR)
 
-grid_width = screen_width // Boid.VIEW_DISTANCE
-if screen_width % Boid.VIEW_DISTANCE != 0:
-    grid_width += 1
+GRID_WIDTH = SCREEN_WIDTH // Boid.VIEW_DISTANCE
+if SCREEN_WIDTH % Boid.VIEW_DISTANCE != 0:
+    GRID_WIDTH += 1
 
-grid_height = screen_height // Boid.VIEW_DISTANCE
-if screen_height % Boid.VIEW_DISTANCE != 0:
-    grid_height += 1
+GRID_HEIGHT = SCREEN_HEIGHT // Boid.VIEW_DISTANCE
+if SCREEN_HEIGHT % Boid.VIEW_DISTANCE != 0:
+    GRID_HEIGHT += 1
+
 
 def get_grid_coords(boid):
     pos = boid.get_pos()
-    return [int((pos[1] // Boid.VIEW_DISTANCE) % grid_height), int((pos[0] // Boid.VIEW_DISTANCE) % grid_width)]
+    return [
+        int((pos[1] // Boid.VIEW_DISTANCE) % GRID_HEIGHT),
+        int((pos[0] // Boid.VIEW_DISTANCE) % GRID_WIDTH)
+        ]
+
 
 def generate_rand_boid():
-    pos = [randint(0, screen_size[0]), randint(0, screen_size[1])]
+    pos = [randint(0, SCREEN_SIZE[0]), randint(0, SCREEN_SIZE[1])]
     magnitude = Boid.MAX_MAGNITUDE
     theta = 2 * random() * pi
 
     return Boid(pos, magnitude, theta)
 
+
 def update(delta_theta, delta_magnitude):
     # initialize the grid to improve updates
-    grid = DataGrid(grid_width, grid_height, True)
-    for boid in boids:
+    grid = DataGrid(GRID_WIDTH, GRID_HEIGHT, True)
+    for boid in BOIDS:
         grid.push_data(boid, get_grid_coords(boid))
 
     # instead of iterating over the boids and always fetching its cell
     # and surrounding cells, fetch each cell only once, and iterate
     # over the boids in each cell
-    for i in range(grid_height):
-        for j in range(grid_width):
+    for i in range(GRID_HEIGHT):
+        for j in range(GRID_WIDTH):
             # fetch the cell, and the cell-group
             cell = grid.get_cell([i, j])
             cell_group = grid.get_cell_group([i, j])
 
             # now iterate over the boids in this cell
             for boid in cell:
-                boid.update(cell_group, screen_size)
+                boid.update(cell_group, SCREEN_SIZE)
+
 
 def draw_boid(boid):
     # draw a boid to the screen
-    pygame.draw.polygon(screen, boid.get_color(), boid.get_poly())
+    pygame.draw.polygon(SCREEN, boid.get_color(), boid.get_poly())
+
 
 def render_config():
-    text_separation = font.render('SEPARATION', True, font_dark_green if config.Separation else font_dark_red)
-    textRect_separation = text_separation.get_rect()
-    textRect_separation.x = 5
-    textRect_separation.y = 5
+    text_separation = \
+        FONT.render('SEPARATION', True, FONT_DARK_GREEN if config.Separation else FONT_DARK_RED)
+    text_rect_separation = text_separation.get_rect()
+    text_rect_separation.x = 5
+    text_rect_separation.y = 5
 
-    text_alignment = font.render('ALIGNMENT', True, font_dark_green if config.Alignment else font_dark_red)
-    textRect_alignment = text_alignment.get_rect()
-    textRect_alignment.x = 5
-    textRect_alignment.y = 20
+    text_alignment = \
+        FONT.render('ALIGNMENT', True, FONT_DARK_GREEN if config.Alignment else FONT_DARK_RED)
+    text_rect_alignment = text_alignment.get_rect()
+    text_rect_alignment.x = 5
+    text_rect_alignment.y = 20
 
-    text_cohesion = font.render('COHESION', True, font_dark_green if config.Cohesion else font_dark_red)
-    textRect_cohesion = text_cohesion.get_rect()
-    textRect_cohesion.x = 5
-    textRect_cohesion.y = 35
-    screen.blit(text_separation, textRect_separation)
-    screen.blit(text_alignment, textRect_alignment)
-    screen.blit(text_cohesion, textRect_cohesion)
+    text_cohesion = \
+        FONT.render('COHESION', True, FONT_DARK_GREEN if config.Cohesion else FONT_DARK_RED)
+    text_rect_cohesion = text_cohesion.get_rect()
+    text_rect_cohesion.x = 5
+    text_rect_cohesion.y = 35
+
+    SCREEN.blit(text_separation, text_rect_separation)
+    SCREEN.blit(text_alignment, text_rect_alignment)
+    SCREEN.blit(text_cohesion, text_rect_cohesion)
+
 
 def render():
     # clear the screen
-    screen.fill(bg_color)
+    SCREEN.fill(BG_COLOR)
 
     # render the boids
-    for boid in boids:
+    for boid in BOIDS:
         draw_boid(boid)
 
     if config.Show_Config:
@@ -104,13 +117,14 @@ def render():
     #re-render
     pygame.display.update()
 
+
 def main_loop():
     prev_update_time = prev_render_time = time.time()
-    
+
     render()
 
-    delta_update_threshold = 1 / ups
-    delta_render_threshold = 1 / fps
+    delta_update_threshold = 1 / UPS
+    delta_render_threshold = 1 / FPS
 
     _1_is_pressed = False
     _2_is_pressed = False
@@ -124,7 +138,7 @@ def main_loop():
         # get the time elapsed since the last update and last render
         delta_update = curr_time - prev_update_time
         delta_render = curr_time - prev_render_time
-        
+
         # check for events
         pygame.event.pump()
         keys = pygame.key.get_pressed()
@@ -190,12 +204,12 @@ def main_loop():
 
             # update the prev time
             prev_render_time = time.time()
-    
     # end of main_loop()
-        
+
+
 print('Starting . . . ')
 
-boids = [generate_rand_boid() for i in range(config.BOID_COUNT)]
+BOIDS = [generate_rand_boid() for i in range(config.BOID_COUNT)]
 # boids = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0), Boid((100, 300), Boid.MAX_MAGNITUDE/4, pi/4)]
 
 main_loop()
