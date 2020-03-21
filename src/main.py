@@ -9,7 +9,7 @@ from actors.boid import Boid
 from data_grid import DataGrid
 
 # defaults/constants
-BG_COLOR = (159, 182, 205)
+BG_COLOR = (72, 72, 72)
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 750
 SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -22,9 +22,8 @@ pygame.init()
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
 
 FONT = pygame.font.Font(None, 24)
-FONT_DARK_RED = (64, 0, 0)
-FONT_DARK_GREEN = (0, 64, 0)
-FONT_DARK_BLUE = (0, 0, 64)
+FONT_RED = (64, 0, 0)
+FONT_GREEN = (16, 128, 16)
 
 pygame.display.set_caption('Boids')
 SCREEN.fill(BG_COLOR)
@@ -81,19 +80,19 @@ def draw_boid(boid):
 
 def render_config():
     text_separation = \
-        FONT.render('SEPARATION', True, FONT_DARK_GREEN if config.SEPARATION else FONT_DARK_RED)
+        FONT.render('SEPARATION', True, FONT_GREEN if config.SEPARATION else FONT_RED)
     text_rect_separation = text_separation.get_rect()
     text_rect_separation.x = 5
     text_rect_separation.y = 5
 
     text_alignment = \
-        FONT.render('ALIGNMENT', True, FONT_DARK_GREEN if config.ALIGNMENT else FONT_DARK_RED)
+        FONT.render('ALIGNMENT', True, FONT_GREEN if config.ALIGNMENT else FONT_RED)
     text_rect_alignment = text_alignment.get_rect()
     text_rect_alignment.x = 5
     text_rect_alignment.y = 20
 
     text_cohesion = \
-        FONT.render('COHESION', True, FONT_DARK_GREEN if config.COHESION else FONT_DARK_RED)
+        FONT.render('COHESION', True, FONT_GREEN if config.COHESION else FONT_RED)
     text_rect_cohesion = text_cohesion.get_rect()
     text_rect_cohesion.x = 5
     text_rect_cohesion.y = 35

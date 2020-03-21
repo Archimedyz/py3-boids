@@ -12,8 +12,10 @@ class Boid:
     _D_THETA_PER_UPDATE = pi / 50
     _D_MAGNITUDE_PER_UPDATE = 0.075
 
-    _next_id = 0
+    _NEUTRAL_COLOR = (0, 0, 0)
+    _ACTIVE_COLOR = (228, 235, 26)
 
+    _next_id = 0
 
     def __init__(self, init_position, init_magnitude, init_theta):        
         self._pos = [init_position[0], init_position[1]] # force to a list to allow reassignment.
@@ -22,7 +24,7 @@ class Boid:
 
         # "private" properties
         self._poly = [(8, 0), (-8, 6), (-8, -6)]
-        self._color = (180, 0, 120)
+        self._color = Boid._NEUTRAL_COLOR
         self._id = f'boid_{Boid._next_id}'
 
         # properties to help w/ computation later
@@ -86,7 +88,7 @@ class Boid:
         # enforce bounding
         self.enforce_bounds(screen_size)
 
-        self._color = (0, 0, 0)
+        self._color = Boid._NEUTRAL_COLOR
 
         # if the boid is not moving, it need not do anything to avoid the collision
         if self._magnitude == 0:
@@ -168,7 +170,7 @@ class Boid:
             return False
 
         # we can see the other boid!
-        self._color = (180, 0, 120)
+        self._color = Boid._ACTIVE_COLOR
 
         return True
 
