@@ -11,7 +11,7 @@ class Boid:
     _VIEW_ANGLE = 0.75 * pi
     _D_THETA_PER_UPDATE = pi / 50
     _D_MAGNITUDE_PER_UPDATE = 0.075
-    
+
     _next_id = 0
 
     def __init__(self, init_position, init_magnitude, init_theta):        
@@ -28,11 +28,15 @@ class Boid:
         self.diff_pos = None
         self.squared_distance = None
         self.adjusted_angle = None
+        self.relative_group_center = [0, 0]
 
         # finally update the id counter
-        Boid._next_id += 1 
+        Boid._next_id += 1
 
     def reset_computation_properties(self):
+        self.relative_group_center = [0, 0]
+
+    def reset_iteration_properties(self):
         self.diff_pos = None
         self.squared_distance = None
         self.adjusted_angle = None
@@ -79,6 +83,12 @@ class Boid:
         if self._magnitude == 0:
             return
 
+        _separation = config.SEPARATION
+        _alignment = config.ALIGNMENT
+        _cohesion = config.COHESION
+
+        self.reset_computation_properties()
+
         # iterate over each boid group
         for group in boid_groups:
             # iterate over each boid in the group
@@ -87,18 +97,26 @@ class Boid:
                 if other.get_id() == self._id:
                     continue
 
-                self.reset_computation_properties()
+                self.reset_iteration_properties()
 
                 # if one of the rules is active, check for visibility. If the other boid is not visible, we cannot act on it.
-                if (config.SEPARATION or config.ALIGNMENT or config.COHESION) and \
+                if (_separation or _alignment or _cohesion) and \
                     not self.can_see(other):
                     continue
 
                 # follow the 3 rules if active
-                if config.SEPARATION:
+                if _separation:
                     self.avoid_collision(other)
-                if config.ALIGNMENT:
+                if _alignment:
                     self.align(other)
+                
+                # COHESION will try to go towards the center of the local group
+                if _cohesion:
+                    self.adjust_relative_center()
+            
+            if _cohesion:
+                self.merge()
+
             
         # get update the position based on the speed
         delta = to_vector(self._magnitude, self._theta)
@@ -193,7 +211,15 @@ class Boid:
         multiplier = 1 if self.squared_distance < 1 else 1 / sqrt(self.squared_distance)
         self._theta += angle_diff * multiplier
 
-        
+    def adjust_relative_center(self):
+        # we just add the values, no need to average as we want the angle in the end
+        self.relative_group_center[0] += self.diff_pos[0]
+        self.relative_group_center[1] += self.diff_pos[1]
+
+    def merge(self):
+        # at this point, we want to move toward the relative group center
+        relative_angle = atan2(self.relative_group_center[1], self.relative_group_center[0])
+        self._theta += relative_angle * 0.1
 
 # END class Boid
 
