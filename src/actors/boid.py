@@ -2,7 +2,7 @@ import config
 from math import atan2, cos, pi, sin, sqrt
 from sys import float_info
 
-half_pi = pi / 2
+HALF_PI = pi / 2
 
 class Boid:
     MAX_MAGNITUDE = 10
@@ -13,6 +13,7 @@ class Boid:
     _D_MAGNITUDE_PER_UPDATE = 0.075
 
     _next_id = 0
+
 
     def __init__(self, init_position, init_magnitude, init_theta):        
         self._pos = [init_position[0], init_position[1]] # force to a list to allow reassignment.
@@ -33,8 +34,10 @@ class Boid:
         # finally update the id counter
         Boid._next_id += 1
 
+
     def reset_computation_properties(self):
         self.relative_group_center = [0, 0]
+
 
     def reset_iteration_properties(self):
         self.diff_pos = None
@@ -45,20 +48,25 @@ class Boid:
     def get_id(self):
         return self._id
 
+
     def get_pos(self):
         return self._pos
-    
+
+
     def get_color(self):
         return self._color
 
+
     def get_vec(self):
         return (self._magnitude, self._theta)
+
 
     def get_poly(self):
         a = rotate(self._poly[0], self._theta)
         b = rotate(self._poly[1], self._theta)
         c = rotate(self._poly[2], self._theta)
         return transpose([a, b, c], self._pos)
+
 
     def enforce_bounds(self, screen_size):
         # safety check: limit theta to +/- pi
@@ -72,6 +80,7 @@ class Boid:
             self._pos[0] %= screen_size[0] + 1
         if self._pos[1] > screen_size[1] or self._pos[1] < 0:
             self._pos[1] %= screen_size[1] + 1
+
 
     def update(self, boid_groups, screen_size):
         # enforce bounding
@@ -117,16 +126,18 @@ class Boid:
             if _cohesion:
                 self.merge()
 
-            
+
         # get update the position based on the speed
         delta = to_vector(self._magnitude, self._theta)
         self._pos[0] += delta[0]
         self._pos[1] += delta[1]
-    
+
+
     def update_speed(self, d_megnitude, d_theta):
         # update theta
         self._theta += d_theta
         self._magnitude += d_megnitude
+
 
     def can_see(self, other):
         # determine if the other's relative position to self
@@ -137,7 +148,7 @@ class Boid:
         if self.diff_pos[0] > Boid.VIEW_DISTANCE or \
             self.diff_pos[1] > Boid.VIEW_DISTANCE:
             return False
-        
+
         # now we can compute and store the distance squared
         self.squared_distance = self.diff_pos[0]**2 + self.diff_pos[1]**2
         if self.squared_distance > Boid.SQUARED_VIEW_DISTANCE:
@@ -145,13 +156,13 @@ class Boid:
 
         # determine the other boid's angle relative to self
         if self.diff_pos[0] == 0:
-            angle_from_boid = half_pi if self.diff_pos[1] >= 0 else -half_pi
+            angle_from_boid = HALF_PI if self.diff_pos[1] >= 0 else -HALF_PI
         else:
             angle_from_boid = atan2(self.diff_pos[1], self.diff_pos[0])
 
         # adjust relative angle
         self.adjusted_angle = normalize_angle(angle_from_boid - self._theta)
-        
+
         # if we cannot see the other boid, do nothing
         if self.adjusted_angle >= Boid._VIEW_ANGLE or self.adjusted_angle <= -Boid._VIEW_ANGLE:
             return False
@@ -160,6 +171,7 @@ class Boid:
         self._color = (180, 0, 120)
 
         return True
+
 
     def avoid_collision(self, other):
         # get the other's adjusted vector angle 
@@ -193,6 +205,7 @@ class Boid:
         else:
             self._theta -= Boid._D_THETA_PER_UPDATE
 
+
     def align(self, other):
         # we should only try to align with boids going in the same general direction
         # the rule will be that the angle difference cannot be more than pi/2
@@ -211,29 +224,37 @@ class Boid:
         multiplier = 1 if self.squared_distance < 1 else 1 / sqrt(self.squared_distance)
         self._theta += angle_diff * multiplier
 
+
     def adjust_relative_center(self):
         # we just add the values, no need to average as we want the angle in the end
         self.relative_group_center[0] += self.diff_pos[0]
         self.relative_group_center[1] += self.diff_pos[1]
 
+
     def merge(self):
         # at this point, we want to move toward the relative group center
         relative_angle = atan2(self.relative_group_center[1], self.relative_group_center[0])
-        self._theta += relative_angle * 0.1
+        self._theta += relative_angle * pi * Boid._D_THETA_PER_UPDATE
 
 # END class Boid
 
 def to_vector(magnitude, theta):
     return [magnitude * cos(theta), magnitude * sin(theta)]
 
+
 def rotate(coord, theta):
-    return [coord[0] * cos(theta) - coord[1] * sin(theta), coord[0] * sin(theta) + coord[1] * cos(theta)]
+    return [
+        coord[0] * cos(theta) - coord[1] * sin(theta),
+        coord[0] * sin(theta) + coord[1] * cos(theta)
+        ]
+
 
 def transpose(coords, vec):
     updated_coords = []
     for point in coords:
         updated_coords.append([point[0] + vec[0], point[1] + vec[1]])
     return updated_coords
+
 
 def normalize_angle(theta):
     if theta > pi:
@@ -242,10 +263,12 @@ def normalize_angle(theta):
         theta += 2*pi    
     return theta
 
+
 def float_equals(val1, val2):
     return -float_info.epsilon <= val1 - val2 <= float_info.epsilon
 
-def in_range(value, range):
-    if range[0] > range[1]:
-        return range[0] >= value >= range[1]
-    return range[1] >= value >= range[0]
+
+def in_range(value, _range):
+    if _range[0] > _range[1]:
+        return _range[0] >= value >= _range[1]
+    return _range[1] >= value >= _range[0]
