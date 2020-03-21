@@ -1,9 +1,9 @@
 # Toggles/Flags
-Separation = False
-Alignment = False
-Cohesion = False
+SEPARATION = False
+ALIGNMENT = False
+COHESION = False
 
-Show_Config = False
+SHOW_CONFIG = False
 
 # Constants
-BOID_COUNT = 50
+BOID_COUNT = 75
