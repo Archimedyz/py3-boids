@@ -1,6 +1,6 @@
 from math import atan2, cos, pi, sin, sqrt
 from sys import float_info
-import simstate as simstate
+import sim_state
 
 HALF_PI = pi / 2
 
@@ -100,9 +100,9 @@ class Boid:
         if self._magnitude == 0:
             return
 
-        _separation = simstate.SEPARATION
-        _alignment = simstate.ALIGNMENT
-        _cohesion = simstate.COHESION
+        _separation = sim_state.SEPARATION
+        _alignment = sim_state.ALIGNMENT
+        _cohesion = sim_state.COHESION
 
         self.reset_computation_properties()
 
