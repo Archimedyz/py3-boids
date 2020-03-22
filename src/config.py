@@ -1,9 +1,10 @@
-# Toggles/Flags
-SEPARATION = False
-ALIGNMENT = False
-COHESION = False
+"""
+Configuration for each
+"""
 
-SHOW_CONFIG = False
-
-# Constants
+# Driver config
 BOID_COUNT = 75
+
+# Boid config
+
+# Data grid config

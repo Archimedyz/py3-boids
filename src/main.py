@@ -4,6 +4,7 @@ from math import pi
 from pygame.locals import *
 from random import random, randint
 import config
+import simstate
 
 from actors.boid import Boid
 from data_grid import DataGrid
@@ -80,19 +81,19 @@ def draw_boid(boid):
 
 def render_config():
     text_separation = \
-        FONT.render('SEPARATION', True, FONT_GREEN if config.SEPARATION else FONT_RED)
+        FONT.render('SEPARATION', True, FONT_GREEN if simstate.SEPARATION else FONT_RED)
     text_rect_separation = text_separation.get_rect()
     text_rect_separation.x = 5
     text_rect_separation.y = 5
 
     text_alignment = \
-        FONT.render('ALIGNMENT', True, FONT_GREEN if config.ALIGNMENT else FONT_RED)
+        FONT.render('ALIGNMENT', True, FONT_GREEN if simstate.ALIGNMENT else FONT_RED)
     text_rect_alignment = text_alignment.get_rect()
     text_rect_alignment.x = 5
     text_rect_alignment.y = 20
 
     text_cohesion = \
-        FONT.render('COHESION', True, FONT_GREEN if config.COHESION else FONT_RED)
+        FONT.render('COHESION', True, FONT_GREEN if simstate.COHESION else FONT_RED)
     text_rect_cohesion = text_cohesion.get_rect()
     text_rect_cohesion.x = 5
     text_rect_cohesion.y = 35
@@ -110,7 +111,7 @@ def render():
     for boid in BOIDS:
         draw_boid(boid)
 
-    if config.SHOW_CONFIG:
+    if simstate.SHOW_CONFIG:
         render_config()
 
     #re-render
@@ -150,28 +151,28 @@ def main_loop():
         if keys[K_1]:
             _1_is_pressed = True
         elif _1_is_pressed:
-            config.SEPARATION = not config.SEPARATION
+            simstate.SEPARATION = not simstate.SEPARATION
             _1_is_pressed = False
 
         # toggle alignment rule
         if keys[K_2]:
             _2_is_pressed = True
         elif _2_is_pressed:
-            config.ALIGNMENT = not config.ALIGNMENT
+            simstate.ALIGNMENT = not simstate.ALIGNMENT
             _2_is_pressed = False
 
         # toggle cohesion rule
         if keys[K_3]:
             _3_is_pressed = True
         elif _3_is_pressed:
-            config.COHESION = not config.COHESION
+            simstate.COHESION = not simstate.COHESION
             _3_is_pressed = False
 
         # toggle config display
         if keys[K_c]:
             _c_is_pressed = True
         elif _c_is_pressed:
-            config.SHOW_CONFIG = not config.SHOW_CONFIG
+            simstate.SHOW_CONFIG = not simstate.SHOW_CONFIG
             _c_is_pressed = False
 
         # update and process event if it's time

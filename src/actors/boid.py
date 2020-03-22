@@ -1,6 +1,6 @@
-import config
 from math import atan2, cos, pi, sin, sqrt
 from sys import float_info
+import simstate as simstate
 
 HALF_PI = pi / 2
 
@@ -9,7 +9,7 @@ class Boid:
     VIEW_DISTANCE = 75
     SQUARED_VIEW_DISTANCE = VIEW_DISTANCE ** 2
     _VIEW_ANGLE = 0.75 * pi
-    _D_THETA_PER_UPDATE = pi / 10
+    _D_THETA_PER_UPDATE = pi / 4
     _D_MAGNITUDE_PER_UPDATE = 0.075
 
     _NEUTRAL_COLOR = (0, 0, 0)
@@ -100,9 +100,9 @@ class Boid:
         if self._magnitude == 0:
             return
 
-        _separation = config.SEPARATION
-        _alignment = config.ALIGNMENT
-        _cohesion = config.COHESION
+        _separation = simstate.SEPARATION
+        _alignment = simstate.ALIGNMENT
+        _cohesion = simstate.COHESION
 
         self.reset_computation_properties()
 
