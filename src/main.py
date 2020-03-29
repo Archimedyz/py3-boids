@@ -77,6 +77,17 @@ def draw_boid(boid):
     pygame.draw.polygon(SCREEN, boid.get_color(), boid.get_poly())
 
 
+def render_paused():
+    pause_surface = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
+    pause_surface.fill((*config.FONT_LIGHT_GRAY, 64))
+
+    text_paused = FONT.render('PAUSED', True, config.FONT_LIGHT_GRAY)
+    text_rect_paused = text_paused.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+
+    SCREEN.blit(pause_surface, (0, 0))
+    SCREEN.blit(text_paused, text_rect_paused)
+
+
 def render_config():
     text_separation = \
         FONT.render('[1] SEPARATION', True, config.FONT_GREEN if sim_state.SEPARATION else config.FONT_RED)
@@ -108,6 +119,9 @@ def render():
     # render the boids
     for boid in BOIDS:
         draw_boid(boid)
+
+    if sim_state.PAUSED:
+        render_paused()
 
     if sim_state.SHOW_CONFIG:
         render_config()
