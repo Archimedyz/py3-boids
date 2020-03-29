@@ -8,3 +8,4 @@ ALIGNMENT = False
 COHESION = False
 
 SHOW_CONFIG = False
+PAUSED = False

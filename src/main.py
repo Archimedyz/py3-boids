@@ -123,9 +123,21 @@ def process_events(key_state):
     keys = pygame.key.get_pressed()
     event_types = (e.type for e in pygame.event.get())
 
-    # exit simulation
+    # exit simulation, return -1 to signal termination
     if keys[K_ESCAPE] or keys[K_q] or (pygame.QUIT in event_types):
         return -1
+
+    # check if pause was pressed
+    if keys[K_p]:
+        key_state['p'] = True
+    elif key_state['p']:
+        sim_state.PAUSED = not sim_state.PAUSED
+        key_state['p'] = False
+
+    # if in paused state, return 1 to signal continue
+    if sim_state.PAUSED:
+        render()
+        return 1
 
     # toggle separation rule
     if keys[K_1]:
@@ -155,6 +167,7 @@ def process_events(key_state):
         sim_state.SHOW_CONFIG = not sim_state.SHOW_CONFIG
         key_state['c'] = False
 
+    # all events processed normally, return 0 to signal normal flow
     return 0
 
 def main_loop():
@@ -170,6 +183,7 @@ def main_loop():
         '2': False,
         '3': False,
         'c': False,
+        'p': False,
     }
 
     exit_loop = False
@@ -184,6 +198,9 @@ def main_loop():
 
         if game_status == -1:
             break
+
+        if game_status == 1:
+            continue
 
         # update and process event if it's time
         if delta_update > delta_update_threshold:
