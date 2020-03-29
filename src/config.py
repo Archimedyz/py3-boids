@@ -1,9 +1,13 @@
-# Toggles/Flags
-SEPARATION = False
-ALIGNMENT = False
-COHESION = False
+"""
+Configuration for each
+"""
 
-SHOW_CONFIG = False
-
-# Constants
+# Driver config
 BOID_COUNT = 75
+FONT_RED = (64, 0, 0)
+FONT_GREEN = (16, 128, 16)
+FONT_LIGHT_GRAY = (200, 200, 200)
+
+# Boid config
+
+# Data grid config
