@@ -23,8 +23,6 @@ pygame.init()
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
 
 FONT = pygame.font.Font(None, 24)
-FONT_RED = (64, 0, 0)
-FONT_GREEN = (16, 128, 16)
 
 pygame.display.set_caption('Boids')
 SCREEN.fill(BG_COLOR)
@@ -54,7 +52,7 @@ def generate_rand_boid():
     return Boid(pos, magnitude, theta)
 
 
-def update(delta_theta, delta_magnitude):
+def update():
     # initialize the grid to improve updates
     grid = DataGrid(GRID_WIDTH, GRID_HEIGHT, True)
     for boid in BOIDS:
@@ -81,22 +79,22 @@ def draw_boid(boid):
 
 def render_config():
     text_separation = \
-        FONT.render('[1] SEPARATION', True, FONT_GREEN if sim_state.SEPARATION else FONT_RED)
+        FONT.render('[1] SEPARATION', True, config.FONT_GREEN if sim_state.SEPARATION else config.FONT_RED)
     text_rect_separation = text_separation.get_rect()
     text_rect_separation.x = 5
     text_rect_separation.y = 5
 
     text_alignment = \
-        FONT.render('[2] ALIGNMENT', True, FONT_GREEN if sim_state.ALIGNMENT else FONT_RED)
+        FONT.render('[2] ALIGNMENT', True, config.FONT_GREEN if sim_state.ALIGNMENT else config.FONT_RED)
     text_rect_alignment = text_alignment.get_rect()
     text_rect_alignment.x = 5
-    text_rect_alignment.y = 20
+    text_rect_alignment.y = 25
 
     text_cohesion = \
-        FONT.render('[3] COHESION', True, FONT_GREEN if sim_state.COHESION else FONT_RED)
+        FONT.render('[3] COHESION', True, config.FONT_GREEN if sim_state.COHESION else config.FONT_RED)
     text_rect_cohesion = text_cohesion.get_rect()
     text_rect_cohesion.x = 5
-    text_rect_cohesion.y = 35
+    text_rect_cohesion.y = 45
 
     SCREEN.blit(text_separation, text_rect_separation)
     SCREEN.blit(text_alignment, text_rect_alignment)
@@ -117,6 +115,47 @@ def render():
     #re-render
     pygame.display.update()
 
+def process_events(key_state):
+    # indicate global vars
+
+    # check for events
+    pygame.event.pump()
+    keys = pygame.key.get_pressed()
+    event_types = (e.type for e in pygame.event.get())
+
+    # exit simulation
+    if keys[K_ESCAPE] or keys[K_q] or (pygame.QUIT in event_types):
+        return -1
+
+    # toggle separation rule
+    if keys[K_1]:
+        key_state['1'] = True
+    elif key_state['1']:
+        sim_state.SEPARATION = not sim_state.SEPARATION
+        key_state['1'] = False
+
+    # toggle alignment rule
+    if keys[K_2]:
+        key_state['2'] = True
+    elif key_state['2']:
+        sim_state.ALIGNMENT = not sim_state.ALIGNMENT
+        key_state['2'] = False
+
+    # toggle cohesion rule
+    if keys[K_3]:
+        key_state['3'] = True
+    elif key_state['3']:
+        sim_state.COHESION = not sim_state.COHESION
+        key_state['3'] = False
+
+    # toggle config display
+    if keys[K_c]:
+        key_state['c'] = True
+    elif key_state['c']:
+        sim_state.SHOW_CONFIG = not sim_state.SHOW_CONFIG
+        key_state['c'] = False
+
+    return 0
 
 def main_loop():
     prev_update_time = prev_render_time = time.time()
@@ -126,10 +165,12 @@ def main_loop():
     delta_update_threshold = 1 / UPS
     delta_render_threshold = 1 / FPS
 
-    _1_is_pressed = False
-    _2_is_pressed = False
-    _3_is_pressed = False
-    _c_is_pressed = False
+    keys_state = {
+        '1': False,
+        '2': False,
+        '3': False,
+        'c': False,
+    }
 
     exit_loop = False
     while not exit_loop:
@@ -139,67 +180,22 @@ def main_loop():
         delta_update = curr_time - prev_update_time
         delta_render = curr_time - prev_render_time
 
-        # check for events
-        pygame.event.pump()
-        keys = pygame.key.get_pressed()
-        event_types = (e.type for e in pygame.event.get())
+        game_status = process_events(keys_state)
 
-        if keys[K_ESCAPE] or keys[K_q] or (pygame.QUIT in event_types):
+        if game_status == -1:
             break
-
-        # toggle separation rule
-        if keys[K_1]:
-            _1_is_pressed = True
-        elif _1_is_pressed:
-            sim_state.SEPARATION = not sim_state.SEPARATION
-            _1_is_pressed = False
-
-        # toggle alignment rule
-        if keys[K_2]:
-            _2_is_pressed = True
-        elif _2_is_pressed:
-            sim_state.ALIGNMENT = not sim_state.ALIGNMENT
-            _2_is_pressed = False
-
-        # toggle cohesion rule
-        if keys[K_3]:
-            _3_is_pressed = True
-        elif _3_is_pressed:
-            sim_state.COHESION = not sim_state.COHESION
-            _3_is_pressed = False
-
-        # toggle config display
-        if keys[K_c]:
-            _c_is_pressed = True
-        elif _c_is_pressed:
-            sim_state.SHOW_CONFIG = not sim_state.SHOW_CONFIG
-            _c_is_pressed = False
 
         # update and process event if it's time
         if delta_update > delta_update_threshold:
-            delta_theta = 0
-            delta_magnitude = 0
-
-            # turning
-            if keys[K_LEFT]:
-                delta_theta -= 0.0628
-            if keys[K_RIGHT]:
-                delta_theta += 0.0628
-
-            # acceleration
-            if keys[K_UP]:
-                delta_magnitude += 0.075
-            if keys[K_DOWN]:
-                delta_magnitude -= 0.075
-
             # update state
-            update(delta_theta, delta_magnitude)
+            update()
 
             # update the prev time
             prev_update_time = time.time()
 
         # render if it's time
         if delta_render > delta_render_threshold:
+            #render state
             render()
 
             # update the prev time
