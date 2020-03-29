@@ -115,8 +115,21 @@ def render():
     #re-render
     pygame.display.update()
 
+
+def reset_key_state(key_state, *exceptions):
+    for key in key_state:
+        if key in exceptions:
+            continue
+        key_state[key] = False
+
+
 def process_events(key_state):
-    # indicate global vars
+    # variables to track key release
+    _1_released = False
+    _2_released = False
+    _3_released = False
+    _c_released = False
+    _p_released = False
 
     # check for events
     pygame.event.pump()
@@ -131,44 +144,62 @@ def process_events(key_state):
     if keys[K_p]:
         key_state['p'] = True
     elif key_state['p']:
-        sim_state.PAUSED = not sim_state.PAUSED
-        key_state['p'] = False
-
-    # if in paused state, return 1 to signal continue
-    if sim_state.PAUSED:
-        render()
-        return 1
+        _p_released = True
 
     # toggle separation rule
     if keys[K_1]:
         key_state['1'] = True
     elif key_state['1']:
-        sim_state.SEPARATION = not sim_state.SEPARATION
-        key_state['1'] = False
+        _1_released = True
 
     # toggle alignment rule
     if keys[K_2]:
         key_state['2'] = True
     elif key_state['2']:
-        sim_state.ALIGNMENT = not sim_state.ALIGNMENT
-        key_state['2'] = False
+        _2_released = True
 
     # toggle cohesion rule
     if keys[K_3]:
         key_state['3'] = True
     elif key_state['3']:
-        sim_state.COHESION = not sim_state.COHESION
-        key_state['3'] = False
+        _3_released = True
 
     # toggle config display
     if keys[K_c]:
         key_state['c'] = True
     elif key_state['c']:
+        _c_released = True
+
+    # now that we know which keys have been released, we can act on them
+    if _c_released:
         sim_state.SHOW_CONFIG = not sim_state.SHOW_CONFIG
         key_state['c'] = False
 
-    # all events processed normally, return 0 to signal normal flow
+    if _p_released:
+        sim_state.PAUSED = not sim_state.PAUSED
+        key_state['p'] = False
+
+    # if in paused state, return 1 to signal continue
+    if sim_state.PAUSED:
+        # reset the key state for boid controls to avoid weird behaior
+        reset_key_state(key_state, 'p', 'c')
+        return 1
+
+    # process all events normally, return 0 to signal normal flow
+    if _1_released:
+        sim_state.SEPARATION = not sim_state.SEPARATION
+        key_state['1'] = False
+
+    if _2_released:
+        sim_state.ALIGNMENT = not sim_state.ALIGNMENT
+        key_state['2'] = False
+
+    if _3_released:
+        sim_state.COHESION = not sim_state.COHESION
+        key_state['3'] = False
+
     return 0
+
 
 def main_loop():
     prev_update_time = prev_render_time = time.time()
@@ -199,16 +230,14 @@ def main_loop():
         if game_status == -1:
             break
 
-        if game_status == 1:
-            continue
+        if game_status == 0:
+            # update and process event if it's time
+            if delta_update > delta_update_threshold:
+                # update state
+                update()
 
-        # update and process event if it's time
-        if delta_update > delta_update_threshold:
-            # update state
-            update()
-
-            # update the prev time
-            prev_update_time = time.time()
+                # update the prev time
+                prev_update_time = time.time()
 
         # render if it's time
         if delta_render > delta_render_threshold:
