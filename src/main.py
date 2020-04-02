@@ -3,17 +3,13 @@ import pygame
 from math import pi
 from pygame.locals import *
 from random import random, randint
-import config
+from config import *
 import sim_state
 
 from actors.boid import Boid
 from data_grid import DataGrid
 
 # defaults/constants
-BG_COLOR = (72, 72, 72)
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 750
-SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 UPS = 60  # updates per second
 FPS = 60  # frames per second
 M_BOID_0 = 'boid_0'
@@ -21,7 +17,6 @@ M_BOID_0 = 'boid_0'
 # setup
 pygame.init()
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
-
 FONT = pygame.font.Font(None, 24)
 
 pygame.display.set_caption('Boids')
@@ -69,7 +64,7 @@ def update():
 
             # now iterate over the boids in this cell
             for boid in cell:
-                boid.update(cell_group, SCREEN_SIZE)
+                boid.update(cell_group)
 
 
 def draw_boid(boid):
@@ -79,9 +74,9 @@ def draw_boid(boid):
 
 def render_paused():
     pause_surface = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
-    pause_surface.fill((*config.FONT_LIGHT_GRAY, 64))
+    pause_surface.fill((*FONT_LIGHT_GRAY, 64))
 
-    text_paused = FONT.render('PAUSED', True, config.FONT_LIGHT_GRAY)
+    text_paused = FONT.render('PAUSED', True, FONT_LIGHT_GRAY)
     text_rect_paused = text_paused.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
 
     SCREEN.blit(pause_surface, (0, 0))
@@ -90,19 +85,19 @@ def render_paused():
 
 def render_config():
     text_separation = \
-        FONT.render('[1] SEPARATION', True, config.FONT_GREEN if sim_state.SEPARATION else config.FONT_RED)
+        FONT.render('[1] SEPARATION', True, FONT_GREEN if sim_state.SEPARATION else FONT_RED)
     text_rect_separation = text_separation.get_rect()
     text_rect_separation.x = 5
     text_rect_separation.y = 5
 
     text_alignment = \
-        FONT.render('[2] ALIGNMENT', True, config.FONT_GREEN if sim_state.ALIGNMENT else config.FONT_RED)
+        FONT.render('[2] ALIGNMENT', True, FONT_GREEN if sim_state.ALIGNMENT else FONT_RED)
     text_rect_alignment = text_alignment.get_rect()
     text_rect_alignment.x = 5
     text_rect_alignment.y = 25
 
     text_cohesion = \
-        FONT.render('[3] COHESION', True, config.FONT_GREEN if sim_state.COHESION else config.FONT_RED)
+        FONT.render('[3] COHESION', True, FONT_GREEN if sim_state.COHESION else FONT_RED)
     text_rect_cohesion = text_cohesion.get_rect()
     text_rect_cohesion.x = 5
     text_rect_cohesion.y = 45
@@ -265,7 +260,7 @@ def main_loop():
 
 print('Starting . . . ')
 
-BOIDS = [generate_rand_boid() for i in range(config.BOID_COUNT)]
+BOIDS = [generate_rand_boid() for i in range(BOID_COUNT)]
 # BOIDS = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0), Boid((100, 300), Boid.MAX_MAGNITUDE/4, pi/4)]
 
 main_loop()

@@ -1,6 +1,7 @@
 from math import atan2, cos, pi, sin, sqrt
 from sys import float_info
 import sim_state
+import config
 
 HALF_PI = pi / 2
 
@@ -76,7 +77,7 @@ class Boid:
         return transpose([a, b, c], self._pos)
 
 
-    def enforce_bounds(self, screen_size):
+    def enforce_bounds(self):
         # safety check: limit theta to +/- pi
         self._theta = normalize_angle(self._theta)
 
@@ -84,15 +85,15 @@ class Boid:
         self._magnitude = min(max(self._magnitude, 0), Boid.MAX_MAGNITUDE)
 
         # wrapping behavior: wrap around to other end
-        if self._pos[0] > screen_size[0] or self._pos[0] < 0:
-            self._pos[0] %= screen_size[0] + 1
-        if self._pos[1] > screen_size[1] or self._pos[1] < 0:
-            self._pos[1] %= screen_size[1] + 1
+        if self._pos[0] > config.SCREEN_SIZE[0] or self._pos[0] < 0:
+            self._pos[0] %= config.SCREEN_SIZE[0] + 1
+        if self._pos[1] > config.SCREEN_SIZE[1] or self._pos[1] < 0:
+            self._pos[1] %= config.SCREEN_SIZE[1] + 1
 
 
-    def update(self, boid_groups, screen_size):
+    def update(self, boid_groups):
         # enforce bounding
-        self.enforce_bounds(screen_size)
+        self.enforce_bounds()
 
         self._color = Boid._NEUTRAL_COLOR
 
