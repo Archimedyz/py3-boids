@@ -7,14 +7,12 @@ HALF_PI = pi / 2
 
 class ComputedValues:
     def __init__(self):
-        self.computed = False
         self.diff_pos = None
         self.squared_distance = None
         self.adjusted_angle = None
         self.multiplier = 0
 
     def reset(self):
-        self.computed = False
         self.diff_pos = None
         self.squared_distance = None
         self.adjusted_angle = None
@@ -80,8 +78,8 @@ class Boid:
         return _transpose([a, b, c, d], self._pos)
 
 
-    def get_computed_values(self, other_id, other_color):
-        if other_color != self._computation_color:
+    def get_computed_values(self, other_id, other_computation_color):
+        if other_computation_color != self._computation_color:
             return None
 
         if other_id in self._computed_values:
@@ -120,27 +118,28 @@ class Boid:
                 # don't check self
                 if other.get_id() == self._id:
                     continue
-                
+
                 # see if the other boid already computed some variables
-                computed_values = other.get_computed_values(self._id)
-                if computed_values is None:
-                    computed_values = ComputedValues()
-                    self._computed_values[other.get_id()] = computed_values
+                comp_vals = other.get_computed_values(self._id, self._computation_color)
+                if comp_vals is None:
+                    comp_vals = ComputedValues()
+                    self._computed_values[other.get_id()] = comp_vals
 
                 # If the other boid is not visible, we cannot act on it.
-                if not self._can_see(other):
+                if not self._can_see(other, comp_vals):
                     continue
 
                 # follow the 3 rules if active
                 if _separation:
-                    self._avoid_collision(other)
+                    self._avoid_collision(other, comp_vals)
+
                 if _alignment:
-                    self._align(other)
+                    self._align(other, comp_vals)
 
                 # cohesion will try to go towards the center of the local group
                 # however we will only compute the relative center
                 if _cohesion:
-                    self._adjust_relative_center()
+                    self._adjust_relative_center(comp_vals)
             # end boid loop
         # end group loop
 
@@ -185,6 +184,8 @@ class Boid:
         o_pos = other.get_pos()
         if comp_vals.diff_pos is None:
             comp_vals.diff_pos = (o_pos[0]-self._pos[0], o_pos[1]-self._pos[1])
+        else:
+            comp_vals.diff_pos = (-comp_vals.diff_pos[0], -comp_vals.diff_pos[1])
 
         # if the other is too far from self, we cannot see it
         if comp_vals.diff_pos[0] > Boid.VIEW_DISTANCE or \
@@ -194,22 +195,22 @@ class Boid:
         # now we can compute and store the distance squared
         if comp_vals.squared_distance is None:
             comp_vals.squared_distance = comp_vals.diff_pos[0]**2 + comp_vals.diff_pos[1]**2
-        
+
         if comp_vals.squared_distance > Boid.SQUARED_VIEW_DISTANCE:
             return False
 
         # determine the other boid's angle relative to self
-        if comp_vals.diff_pos is None:
+        if comp_vals.adjusted_angle is None:
             if comp_vals.diff_pos[0] == 0:
                 angle_from_boid = HALF_PI if comp_vals.diff_pos[1] >= 0 else -HALF_PI
             else:
                 angle_from_boid = atan2(comp_vals.diff_pos[1], comp_vals.diff_pos[0])
-                
+
             # adjust relative angle
             comp_vals.adjusted_angle = _normalize_angle(angle_from_boid - self._theta)
         else:
             comp_vals.adjusted_angle = _normalize_angle(comp_vals.adjusted_angle + pi - self._theta)
-        
+
 
         # if we cannot see the other boid, do nothing
         if comp_vals.adjusted_angle >= Boid._VIEW_ANGLE or comp_vals.adjusted_angle <= -Boid._VIEW_ANGLE:
@@ -223,22 +224,22 @@ class Boid:
         return True
 
 
-    def _avoid_collision(self, other):
+    def _avoid_collision(self, other, comp_vals):
         # get the other's adjusted vector angle
         o_vec = other.get_vec()
         o_adjusted_theta = _normalize_angle(o_vec[1] - self._theta)
 
         ## first we consider some edge cases
-        if _float_equals(self.adjusted_angle, 0):
+        if _float_equals(comp_vals.adjusted_angle, 0):
             # case 1: boid is directly in front
             if o_vec[0] == 0:
                 # case 1.1: stationary boid, move out of the way
-                self.d_theta += Boid._D_THETA_PER_UPDATE * self.multiplier
+                self.d_theta += Boid._D_THETA_PER_UPDATE * comp_vals.multiplier
                 return
             elif _float_equals(o_adjusted_theta, 0):
                 # case 1.2: moving away directly away. if too slow, dodge it otherwise no need to do anything
                 if o_vec[0] < self._magnitude:
-                    self.d_theta += Boid._D_THETA_PER_UPDATE * self.multiplier
+                    self.d_theta += Boid._D_THETA_PER_UPDATE * comp_vals.multiplier
                 return
         # note, we do not need to consider a boids directly behind as we cannot see them
         # at this point, we know there is no boid directly in front, but if it's not moving, don't need to avoid it.
@@ -246,17 +247,17 @@ class Boid:
             return
 
         # last thing to check is if a collision will occur
-        if not _in_range(o_adjusted_theta, (0, _normalize_angle(pi + self.adjusted_angle))):
+        if not _in_range(o_adjusted_theta, (0, _normalize_angle(pi + comp_vals.adjusted_angle))):
             return
-    
+
         # finally, since a collision may occur, we veer away from the other boid
-        if self.adjusted_angle <= 0:
-            self.d_theta += Boid._D_THETA_PER_UPDATE * self.multiplier
+        if comp_vals.adjusted_angle <= 0:
+            self.d_theta += Boid._D_THETA_PER_UPDATE * comp_vals.multiplier
         else:
-            self.d_theta -= Boid._D_THETA_PER_UPDATE * self.multiplier
+            self.d_theta -= Boid._D_THETA_PER_UPDATE * comp_vals.multiplier
 
 
-    def _align(self, other):
+    def _align(self, other, comp_vals):
         # we should only try to align with boids going in the same general direction
         # the rule will be that the angle difference cannot be more than pi/2
         o_vec = other.get_vec()
@@ -271,13 +272,13 @@ class Boid:
             return
 
         # otherwise, we will try to fall into it's trajectory, but based on our distance to it.
-        self.d_theta += angle_diff * self.multiplier
+        self.d_theta += angle_diff * comp_vals.multiplier
 
 
-    def _adjust_relative_center(self):
+    def _adjust_relative_center(self, comp_vals):
         # we just add the values, no need to average as we want the angle in the end
-        self.relative_group_center[0] += self.diff_pos[0]
-        self.relative_group_center[1] += self.diff_pos[1]
+        self.relative_group_center[0] += comp_vals.diff_pos[0]
+        self.relative_group_center[1] += comp_vals.diff_pos[1]
 
 
     def _merge(self):
