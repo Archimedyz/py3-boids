@@ -68,11 +68,12 @@ def update():
 
 
 def draw_boid(boid):
-    # draw a boid to the screen
+    '''Draw a boid to the screen'''
     pygame.draw.polygon(SCREEN, boid.get_color(), boid.get_poly())
 
 
 def render_paused():
+    '''Renders the pause screen'''
     pause_surface = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
     pause_surface.fill((*FONT_LIGHT_GRAY, 64))
 

@@ -91,61 +91,6 @@ class Boid:
             self._pos[1] %= config.SCREEN_SIZE[1] + 1
 
 
-    def update(self, boid_groups):
-        # enforce bounding
-        self.enforce_bounds()
-
-        self._color = Boid._NEUTRAL_COLOR
-
-        # if the boid is not moving, it need not do anything to avoid the collision
-        if self._magnitude == 0:
-            return
-
-        _separation = sim_state.SEPARATION
-        _alignment = sim_state.ALIGNMENT
-        _cohesion = sim_state.COHESION
-
-        self.reset_computation_properties()
-
-        # iterate over each boid group
-        for group in boid_groups:
-            # iterate over each boid in the group
-            for other in group:
-                # don't check self
-                if other.get_id() == self._id:
-                    continue
-
-                self.reset_iteration_properties()
-
-                # if one of the rules is active, check for visibility.
-                # If the other boid is not visible, we cannot act on it.
-                if (_separation or _alignment or _cohesion) and \
-                    not self.can_see(other):
-                    continue
-
-                # follow the 3 rules if active
-                if _separation:
-                    self.avoid_collision(other)
-                if _alignment:
-                    self.align(other)
-
-                # COHESION will try to go towards the center of the local group
-                if _cohesion:
-                    self.adjust_relative_center()
-            # end boid loop
-        # end group loop
-
-        if _cohesion:
-            self.merge()
-
-        self._theta += self.d_theta
-
-        # get update the position based on the speed
-        delta = to_vector(self._magnitude, self._theta)
-        self._pos[0] += delta[0]
-        self._pos[1] += delta[1]
-
-
     def update_speed(self, d_megnitude, d_theta):
         # update theta
         self._theta += d_theta
@@ -253,6 +198,71 @@ class Boid:
         relative_angle = atan2(self.relative_group_center[1], self.relative_group_center[0])
         self.d_theta += relative_angle * self.boids_in_view / 50
 
+
+    def update_position(self):
+        # get update the position based on the speed
+        delta = to_vector(self._magnitude, self._theta)
+        self._pos[0] += delta[0]
+        self._pos[1] += delta[1]
+
+        # enforce bounding
+        self.enforce_bounds()
+
+    def update(self, boid_groups):
+        '''Update the boids speed, then position based on active rules'''
+
+        self._color = Boid._NEUTRAL_COLOR
+
+        # if the boid is not moving, it need not do anything to avoid the collision
+        if self._magnitude == 0:
+            return
+
+        # read the state, in case it changes during execution.
+        _separation = sim_state.SEPARATION
+        _alignment = sim_state.ALIGNMENT
+        _cohesion = sim_state.COHESION
+
+        # if o rule is active, no need to do anything
+        if not (_separation or _alignment or _cohesion):
+            self.update_position()
+            return
+
+        # some computation is bound to take place, so we perpare
+        self.reset_computation_properties()
+
+        # iterate over each boid group
+        for group in boid_groups:
+            # iterate over each boid in the group
+            for other in group:
+                # don't check self
+                if other.get_id() == self._id:
+                    continue
+
+                self.reset_iteration_properties()
+
+                # If the other boid is not visible, we cannot act on it.
+                if not self.can_see(other):
+                    continue
+
+                # follow the 3 rules if active
+                if _separation:
+                    self.avoid_collision(other)
+                if _alignment:
+                    self.align(other)
+
+                # cohesion will try to go towards the center of the local group
+                # however we will only compute the relative center
+                if _cohesion:
+                    self.adjust_relative_center()
+            # end boid loop
+        # end group loop
+
+        if _cohesion:
+            self.merge()
+
+        self._theta += self.d_theta
+
+        self.update_position()
 # END class Boid
 
 def to_vector(magnitude, theta):
