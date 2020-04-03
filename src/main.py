@@ -6,7 +6,7 @@ from random import random, randint
 from config import *
 import sim_state
 
-from actors.boid import Boid
+from boid import Boid
 from data_grid import DataGrid
 
 # defaults/constants
@@ -19,7 +19,7 @@ pygame.init()
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
 FONT = pygame.font.Font(None, 24)
 
-pygame.display.set_caption('Boids')
+pygame.display.set_caption('Boids Simulation')
 SCREEN.fill(BG_COLOR)
 
 GRID_WIDTH = SCREEN_WIDTH // Boid.VIEW_DISTANCE
