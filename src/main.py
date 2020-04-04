@@ -22,26 +22,29 @@ FONT = pygame.font.Font(None, 24)
 pygame.display.set_caption('Boids Simulation')
 SCREEN.fill(BG_COLOR)
 
-GRID_WIDTH = SCREEN_WIDTH // Boid.VIEW_DISTANCE
-if SCREEN_WIDTH % Boid.VIEW_DISTANCE != 0:
+boid_view_distance = Boid.get_view_distance()
+boid_max_magnitude = Boid.get_max_magnitude()
+
+GRID_WIDTH = SCREEN_WIDTH // boid_view_distance
+if SCREEN_WIDTH % boid_view_distance != 0:
     GRID_WIDTH += 1
 
-GRID_HEIGHT = SCREEN_HEIGHT // Boid.VIEW_DISTANCE
-if SCREEN_HEIGHT % Boid.VIEW_DISTANCE != 0:
+GRID_HEIGHT = SCREEN_HEIGHT // boid_view_distance
+if SCREEN_HEIGHT % boid_view_distance != 0:
     GRID_HEIGHT += 1
 
 
 def get_grid_coords(boid):
     pos = boid.get_pos()
     return [
-        int((pos[1] // Boid.VIEW_DISTANCE) % GRID_HEIGHT),
-        int((pos[0] // Boid.VIEW_DISTANCE) % GRID_WIDTH)
+        int((pos[1] // boid_view_distance) % GRID_HEIGHT),
+        int((pos[0] // boid_view_distance) % GRID_WIDTH)
         ]
 
 
 def generate_rand_boid():
     pos = [randint(0, SCREEN_SIZE[0]), randint(0, SCREEN_SIZE[1])]
-    magnitude = Boid.MAX_MAGNITUDE
+    magnitude = boid_max_magnitude
     theta = 2 * random() * pi
 
     return Boid(pos, magnitude, theta)
@@ -262,7 +265,7 @@ def main_loop():
 print('Starting . . . ')
 
 BOIDS = [generate_rand_boid() for i in range(BOID_COUNT)]
-# BOIDS = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0), Boid((100, 300), Boid.MAX_MAGNITUDE/4, pi/4)]
+# BOIDS = [Boid((100, 400), boid_max_magnitude/4, 0), Boid((100, 300), boid_max_magnitude/4, pi/4)]
 
 main_loop()
 
