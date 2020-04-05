@@ -25,7 +25,7 @@ class Boid:
     __SQUARED_VIEW_DISTANCE = __VIEW_DISTANCE ** 2
     __VIEW_ANGLE = 0.75 * pi
     __D_THETA_PER_UPDATE = pi / 4
-    __D_MAGNITUDE_PER_UPDATE = 0.075
+    __D_MAGNITUDE_PER_UPDATE = pi / 50
 
     __NEUTRAL_COLOR = (0, 0, 0)
     __ACTIVE_COLOR = (228, 235, 26)
@@ -43,7 +43,10 @@ class Boid:
         # properties to help w/ computation
         self.__relative_group_center = [0, 0]
         self.__boids_in_view = 0
-        self.__d_theta = 0
+        self.__boids_avoided = 0
+        self.__d_theta_separation = 0
+        self.__d_theta_alignment = 0
+        self.__d_theta_cohesion = 0
 
         self.__computation_color = False
         self.__computed_values_dict = {}
@@ -141,7 +144,7 @@ class Boid:
                     comp_vals = ComputedValues()
                     self.__computed_values_dict[other.get_id()] = comp_vals
 
-                # If the other boid is not visible, we cannot act on it.
+                # if the other boid is not visible, we cannot act on it.
                 if not self.__can_see(other, comp_vals):
                     continue
 
@@ -159,10 +162,27 @@ class Boid:
             # end boid loop
         # end group loop
 
+        # if we didn't see a sinlge boid, we can update the positino and just return
+        if self.__boids_in_view == 0:
+            self.__update_position()
+            return
+
+        # once we've found the relative center, we try to move towards it
         if cohesion:
             self.__merge()
 
-        self.__theta += min(self.__d_theta, Boid.__MAX_MAGNITUDE)
+        # determine the final change in theta
+        final_d_theta = \
+            self.__d_theta_alignment / self.__boids_in_view + \
+            self.__d_theta_cohesion / self.__boids_in_view
+
+        # only account for separation if we've actually avoided any
+        if self.__boids_avoided > 0:
+            final_d_theta += \
+                self.__d_theta_separation / self.__boids_avoided
+
+        # cannot exceed the max change in theta per update
+        self.__theta += max(min(final_d_theta, Boid.__D_THETA_PER_UPDATE), -Boid.__D_THETA_PER_UPDATE)
 
         self.__update_position()
 
@@ -170,7 +190,10 @@ class Boid:
     def __reset_computation_properties(self):
         self.__relative_group_center = [0, 0]
         self.__boids_in_view = 0
-        self.__d_theta = 0
+        self.__boids_avoided = 0
+        self.__d_theta_separation = 0
+        self.__d_theta_alignment = 0
+        self.__d_theta_cohesion = 0
 
         self.__computed_values_dict = {}
 
@@ -223,13 +246,14 @@ class Boid:
 
 
         # if we cannot see the other boid, do nothing
-        if comp_vals.adjusted_angle >= Boid.__VIEW_ANGLE or comp_vals.adjusted_angle <= -Boid.__VIEW_ANGLE:
+        if comp_vals.adjusted_angle >= Boid.__VIEW_ANGLE or \
+            comp_vals.adjusted_angle <= -Boid.__VIEW_ANGLE:
             return False
 
         # we can see the other boid!
         self.__boids_in_view += 1
         self.__color = Boid.__ACTIVE_COLOR
-        comp_vals.multiplier = 1 if comp_vals.squared_distance > 10 else 10 / sqrt(comp_vals.squared_distance)
+        comp_vals.multiplier = 1 / sqrt(comp_vals.squared_distance)
 
         return True
 
@@ -244,15 +268,21 @@ class Boid:
             # case 1: boid is directly in front
             if o_vec[0] == 0:
                 # case 1.1: stationary boid, move out of the way
-                self.__d_theta += Boid.__D_THETA_PER_UPDATE * comp_vals.multiplier
+                self.__boids_avoided += 1
+                self.__d_theta_separation += Boid.__D_THETA_PER_UPDATE * comp_vals.multiplier
                 return
-            elif float_equals(o_adjusted_theta, 0):
-                # case 1.2: moving away directly away. if too slow, dodge it otherwise no need to do anything
+
+            if float_equals(o_adjusted_theta, 0):
+                # case 1.2: moving away directly away. If too slow,
+                # dodge it otherwise no need to do anything
                 if o_vec[0] < self.__magnitude:
-                    self.__d_theta += Boid.__D_THETA_PER_UPDATE * comp_vals.multiplier
+                    self.__boids_avoided += 1
+                    self.__d_theta_separation += Boid.__D_THETA_PER_UPDATE * comp_vals.multiplier
                 return
         # note, we do not need to consider a boids directly behind as we cannot see them
-        # at this point, we know there is no boid directly in front, but if it's not moving, don't need to avoid it.
+
+        # At this point, we know there is no boid directly in front,
+        # but if it's not moving, don't need to avoid it.
         if o_vec[0] == 0:
             return
 
@@ -262,9 +292,11 @@ class Boid:
 
         # finally, since a collision may occur, we veer away from the other boid
         if comp_vals.adjusted_angle <= 0:
-            self.__d_theta += Boid.__D_THETA_PER_UPDATE * comp_vals.multiplier
+            self.__d_theta_separation += Boid.__D_THETA_PER_UPDATE * comp_vals.multiplier
         else:
-            self.__d_theta -= Boid.__D_THETA_PER_UPDATE * comp_vals.multiplier
+            self.__d_theta_separation -= Boid.__D_THETA_PER_UPDATE * comp_vals.multiplier
+
+        self.__boids_avoided += 1
 
 
     def __align(self, other, comp_vals):
@@ -282,13 +314,13 @@ class Boid:
             return
 
         # otherwise, we will try to fall into it's trajectory, but based on our distance to it.
-        self.__d_theta += angle_diff * comp_vals.multiplier
+        self.__d_theta_alignment += angle_diff * comp_vals.multiplier
 
 
     def __adjust_relative_center(self, comp_vals):
         # we just add the values, no need to average as we want the angle in the end
-        self.__relative_group_center[0] += comp_vals.diff_pos[0]
-        self.__relative_group_center[1] += comp_vals.diff_pos[1]
+        self.__relative_group_center[0] += comp_vals.diff_pos[0] / comp_vals.multiplier
+        self.__relative_group_center[1] += comp_vals.diff_pos[1] / comp_vals.multiplier
 
 
     def __merge(self):
@@ -296,13 +328,14 @@ class Boid:
             return
 
         # at this point, we want to move toward the relative group center
-        relative_angle = atan2(self.__relative_group_center[1], self.__relative_group_center[0])
-        self.__d_theta += relative_angle * self.__boids_in_view / 50
+        absolute_angle = atan2(self.__relative_group_center[1], self.__relative_group_center[0])
+        relative_angle = absolute_angle - self.__theta
+        self.__d_theta_cohesion += relative_angle / self.__boids_in_view
 
 
     def __update_position(self):
         # get update the position based on the speed
-        delta = to_vector(self.__magnitude, self.__theta)
+        delta = to_xy(self.__magnitude, self.__theta)
         self.__pos[0] += delta[0]
         self.__pos[1] += delta[1]
 
@@ -310,28 +343,35 @@ class Boid:
         self.__enforce_bounds()
 # END class Boid
 
-def to_vector(magnitude, theta):
+def to_xy(magnitude, theta):
+    '''Returns the XY parts of vector'''
     return [magnitude * cos(theta), magnitude * sin(theta)]
 
 
-def rotate(coord, theta):
+def rotate(point, theta):
+    '''Rotate a point by the angle theta'''
     return [
-        coord[0] * cos(theta) - coord[1] * sin(theta),
-        coord[0] * sin(theta) + coord[1] * cos(theta)
+        point[0] * cos(theta) - point[1] * sin(theta),
+        point[0] * sin(theta) + point[1] * cos(theta)
         ]
 
-def transpose(coords, vec):
+
+def transpose(coords, xy):
+    '''transposes coodinates by the provided XY'''
     updated_coords = []
     for point in coords:
-        updated_coords.append([point[0] + vec[0], point[1] + vec[1]])
+        updated_coords.append([point[0] + xy[0], point[1] + xy[1]])
     return updated_coords
 
 
 def normalize_angle(theta):
+    '''Normalizez the provided theta to the range ]-pi, pi]'''
     if theta > pi:
-        theta -= 2 * pi
+        while theta > pi:
+            theta -= 2 * pi
     elif theta <= -pi:
-        theta += 2 * pi
+        while theta <= -pi:
+            theta += 2 * pi
     return theta
 
 
