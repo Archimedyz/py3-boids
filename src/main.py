@@ -3,17 +3,13 @@ import pygame
 from math import pi
 from pygame.locals import *
 from random import random, randint
-import config
+from config import *
 import sim_state
 
-from actors.boid import Boid
+from boid import Boid
 from data_grid import DataGrid
 
 # defaults/constants
-BG_COLOR = (72, 72, 72)
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 750
-SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 UPS = 60  # updates per second
 FPS = 60  # frames per second
 M_BOID_0 = 'boid_0'
@@ -21,32 +17,34 @@ M_BOID_0 = 'boid_0'
 # setup
 pygame.init()
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
-
 FONT = pygame.font.Font(None, 24)
 
-pygame.display.set_caption('Boids')
+pygame.display.set_caption('Boids Simulation')
 SCREEN.fill(BG_COLOR)
 
-GRID_WIDTH = SCREEN_WIDTH // Boid.VIEW_DISTANCE
-if SCREEN_WIDTH % Boid.VIEW_DISTANCE != 0:
+BOID_VIEW_DISTANCE = Boid.get_view_distance()
+BOID_MAX_MAGNITUDE = Boid.get_max_magnitude()
+
+GRID_WIDTH = SCREEN_WIDTH // BOID_VIEW_DISTANCE
+if SCREEN_WIDTH % BOID_VIEW_DISTANCE != 0:
     GRID_WIDTH += 1
 
-GRID_HEIGHT = SCREEN_HEIGHT // Boid.VIEW_DISTANCE
-if SCREEN_HEIGHT % Boid.VIEW_DISTANCE != 0:
+GRID_HEIGHT = SCREEN_HEIGHT // BOID_VIEW_DISTANCE
+if SCREEN_HEIGHT % BOID_VIEW_DISTANCE != 0:
     GRID_HEIGHT += 1
 
 
 def get_grid_coords(boid):
     pos = boid.get_pos()
     return [
-        int((pos[1] // Boid.VIEW_DISTANCE) % GRID_HEIGHT),
-        int((pos[0] // Boid.VIEW_DISTANCE) % GRID_WIDTH)
+        int((pos[1] // BOID_VIEW_DISTANCE) % GRID_HEIGHT),
+        int((pos[0] // BOID_VIEW_DISTANCE) % GRID_WIDTH)
         ]
 
 
 def generate_rand_boid():
     pos = [randint(0, SCREEN_SIZE[0]), randint(0, SCREEN_SIZE[1])]
-    magnitude = Boid.MAX_MAGNITUDE
+    magnitude = BOID_MAX_MAGNITUDE
     theta = 2 * random() * pi
 
     return Boid(pos, magnitude, theta)
@@ -69,19 +67,20 @@ def update():
 
             # now iterate over the boids in this cell
             for boid in cell:
-                boid.update(cell_group, SCREEN_SIZE)
+                boid.update(cell_group)
 
 
 def draw_boid(boid):
-    # draw a boid to the screen
+    '''Draw a boid to the screen'''
     pygame.draw.polygon(SCREEN, boid.get_color(), boid.get_poly())
 
 
 def render_paused():
+    '''Renders the pause screen'''
     pause_surface = pygame.Surface(SCREEN_SIZE, pygame.SRCALPHA)
-    pause_surface.fill((*config.FONT_LIGHT_GRAY, 64))
+    pause_surface.fill((*FONT_LIGHT_GRAY, 64))
 
-    text_paused = FONT.render('PAUSED', True, config.FONT_LIGHT_GRAY)
+    text_paused = FONT.render('PAUSED', True, FONT_LIGHT_GRAY)
     text_rect_paused = text_paused.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
 
     SCREEN.blit(pause_surface, (0, 0))
@@ -90,19 +89,19 @@ def render_paused():
 
 def render_config():
     text_separation = \
-        FONT.render('[1] SEPARATION', True, config.FONT_GREEN if sim_state.SEPARATION else config.FONT_RED)
+        FONT.render('[1] SEPARATION', True, FONT_GREEN if sim_state.SEPARATION else FONT_RED)
     text_rect_separation = text_separation.get_rect()
     text_rect_separation.x = 5
     text_rect_separation.y = 5
 
     text_alignment = \
-        FONT.render('[2] ALIGNMENT', True, config.FONT_GREEN if sim_state.ALIGNMENT else config.FONT_RED)
+        FONT.render('[2] ALIGNMENT', True, FONT_GREEN if sim_state.ALIGNMENT else FONT_RED)
     text_rect_alignment = text_alignment.get_rect()
     text_rect_alignment.x = 5
     text_rect_alignment.y = 25
 
     text_cohesion = \
-        FONT.render('[3] COHESION', True, config.FONT_GREEN if sim_state.COHESION else config.FONT_RED)
+        FONT.render('[3] COHESION', True, FONT_GREEN if sim_state.COHESION else FONT_RED)
     text_rect_cohesion = text_cohesion.get_rect()
     text_rect_cohesion.x = 5
     text_rect_cohesion.y = 45
@@ -265,8 +264,8 @@ def main_loop():
 
 print('Starting . . . ')
 
-BOIDS = [generate_rand_boid() for i in range(config.BOID_COUNT)]
-# BOIDS = [Boid((100, 400), Boid.MAX_MAGNITUDE/4, 0), Boid((100, 300), Boid.MAX_MAGNITUDE/4, pi/4)]
+BOIDS = [generate_rand_boid() for i in range(BOID_COUNT)]
+# BOIDS = [Boid((100, 400), BOID_MAX_MAGNITUDE/4, -pi/4), Boid((100, 100), BOID_MAX_MAGNITUDE/4, pi/4)]
 
 main_loop()
 
