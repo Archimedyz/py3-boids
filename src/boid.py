@@ -6,20 +6,16 @@ import config
 HALF_PI = pi / 2
 
 class ComputedValues:
+    '''Struct for values computed during the update step'''
     def __init__(self):
         self.diff_pos = None
         self.squared_distance = None
         self.adjusted_angle = None
         self.multiplier = 0
-
-    def reset(self):
-        self.diff_pos = None
-        self.squared_distance = None
-        self.adjusted_angle = None
-        self.multiplier = None
 # END class ComputedValues
 
 class Boid:
+    '''A single boid'''
     __MAX_MAGNITUDE = 8
     __VIEW_DISTANCE = 75
     __SQUARED_VIEW_DISTANCE = __VIEW_DISTANCE ** 2
@@ -182,7 +178,13 @@ class Boid:
                 self.__d_theta_separation / self.__boids_avoided
 
         # cannot exceed the max change in theta per update
-        self.__theta += max(min(final_d_theta, Boid.__D_THETA_PER_UPDATE), -Boid.__D_THETA_PER_UPDATE)
+        self.__theta += max(
+            min(
+                final_d_theta,
+                Boid.__D_THETA_PER_UPDATE
+            ),
+            -Boid.__D_THETA_PER_UPDATE
+        )
 
         self.__update_position()
 
@@ -376,10 +378,13 @@ def normalize_angle(theta):
 
 
 def float_equals(val1, val2):
+    '''Determines if two floating point values are equal within a margin of error'''
     return -float_info.epsilon <= val1 - val2 <= float_info.epsilon
 
 
 def in_range(value, _range):
+    '''Determines if a value is within the range
+    The Range can be [low, high] or [high, low]'''
     if _range[0] > _range[1]:
         return _range[0] >= value >= _range[1]
     return _range[1] >= value >= _range[0]
